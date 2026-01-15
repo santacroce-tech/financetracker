@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Rule' if rule else 'Add Rule' }} - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-gear"></i> {{ 'Edit Rule' if rule else 'Add Rule' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="pattern" class="form-label">Pattern *</label>
+                        <input type="text" class="form-control font-monospace" id="pattern" name="pattern"
+                               value="{{ rule.pattern if rule else '' }}" required
+                               placeholder="e.g., UBER, Amazon, Spotify">
+                        <div class="form-text">
+                            Enter text that should match in the transaction description or payee.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Category *</label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Select category...</option>
+                            <optgroup label="Expenses">
+                                {% for category in categories if category.category_type == 'expense' %}
+                                <option value="{{ category.id }}"
+                                        {% if rule and rule.category_id == category.id %}selected{% endif %}>
+                                    {{ category.icon }} {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Income">
+                                {% for category in categories if category.category_type == 'income' %}
+                                <option value="{{ category.id }}"
+                                        {% if rule and rule.category_id == category.id %}selected{% endif %}>
+                                    {{ category.icon }} {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Transfers">
+                                {% for category in categories if category.category_type == 'transfer' %}
+                                <option value="{{ category.id }}"
+                                        {% if rule and rule.category_id == category.id %}selected{% endif %}>
+                                    {{ category.icon }} {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="match_field" class="form-label">Match Field</label>
+                        <select class="form-select" id="match_field" name="match_field">
+                            <option value="description" {% if not rule or rule.match_field == 'description' %}selected{% endif %}>
+                                Description & Payee (both)
+                            </option>
+                            <option value="payee" {% if rule and rule.match_field == 'payee' %}selected{% endif %}>
+                                Payee only
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority</label>
+                        <input type="number" class="form-control" id="priority" name="priority"
+                               value="{{ rule.priority if rule else 0 }}" min="0" max="100">
+                        <div class="form-text">
+                            Higher priority rules are matched first (0-100). Default is 0.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_regex" name="is_regex"
+                                   {% if rule and rule.is_regex %}checked{% endif %}>
+                            <label class="form-check-label" for="is_regex">
+                                Use Regular Expression
+                            </label>
+                            <div class="form-text">
+                                Enable for advanced pattern matching (e.g., <code>UBER.*EATS</code>).
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('category_rules') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> {{ 'Save Changes' if rule else 'Create Rule' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pattern Examples -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-lightbulb"></i> Pattern Examples
+            </div>
+            <div class="card-body small">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Pattern</th>
+                            <th>Matches</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>UBER</code></td>
+                            <td>Any transaction containing "UBER"</td>
+                        </tr>
+                        <tr>
+                            <td><code>Amazon</code></td>
+                            <td>Any transaction containing "Amazon" (case-insensitive)</td>
+                        </tr>
+                        <tr>
+                            <td><code>NETFLIX</code></td>
+                            <td>Any transaction containing "NETFLIX"</td>
+                        </tr>
+                        <tr>
+                            <td><code>UBER.*EATS</code> (regex)</td>
+                            <td>"UBER EATS", "UBER - EATS", etc.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

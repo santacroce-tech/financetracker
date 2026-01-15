@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Transaction' if transaction else 'Add Transaction' }} - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-receipt"></i> {{ 'Edit Transaction' if transaction else 'Add Transaction' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                {% if not accounts %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    You need to create an account first before adding transactions.
+                    <a href="{{ url_for('add_account') }}">Create Account</a>
+                </div>
+                {% else %}
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Transaction Type *</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="transaction_type" id="type_expense"
+                                   value="expense" {% if not transaction or transaction.transaction_type == 'expense' %}checked{% endif %}>
+                            <label class="btn btn-outline-danger" for="type_expense">
+                                <i class="bi bi-arrow-up-circle"></i> Expense
+                            </label>
+
+                            <input type="radio" class="btn-check" name="transaction_type" id="type_income"
+                                   value="income" {% if transaction and transaction.transaction_type == 'income' %}checked{% endif %}>
+                            <label class="btn btn-outline-success" for="type_income">
+                                <i class="bi bi-arrow-down-circle"></i> Income
+                            </label>
+
+                            <input type="radio" class="btn-check" name="transaction_type" id="type_transfer"
+                                   value="transfer" {% if transaction and transaction.transaction_type == 'transfer' %}checked{% endif %}>
+                            <label class="btn btn-outline-secondary" for="type_transfer">
+                                <i class="bi bi-arrow-left-right"></i> Transfer
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="account_id" class="form-label">Account *</label>
+                        <select class="form-select" id="account_id" name="account_id" required>
+                            <option value="">Select account...</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}"
+                                    {% if transaction and transaction.account_id == account.id %}selected{% endif %}
+                                    {% if request.args.get('account_id')|int == account.id %}selected{% endif %}>
+                                {{ account.name }} ({{ account.account_type | capitalize }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="amount" name="amount"
+                                   step="0.01" min="0.01" required
+                                   value="{{ transaction.amount if transaction else '' }}"
+                                   placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date *</label>
+                        <input type="date" class="form-control" id="date" name="date" required
+                               value="{{ transaction.date if transaction else today }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="payee" class="form-label">Payee / Merchant</label>
+                        <input type="text" class="form-control" id="payee" name="payee"
+                               value="{{ transaction.payee if transaction else '' }}"
+                               placeholder="e.g., Grocery Store, Employer Name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Category</label>
+                        <select class="form-select" id="category_id" name="category_id">
+                            <option value="">Uncategorized</option>
+                            <optgroup label="Income">
+                                {% for category in categories if category.category_type == 'income' %}
+                                <option value="{{ category.id }}"
+                                        {% if transaction and transaction.category_id == category.id %}selected{% endif %}>
+                                    {{ category.icon }} {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Expenses">
+                                {% for category in categories if category.category_type == 'expense' %}
+                                <option value="{{ category.id }}"
+                                        {% if transaction and transaction.category_id == category.id %}selected{% endif %}>
+                                    {{ category.icon }} {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Transfers">
+                                {% for category in categories if category.category_type == 'transfer' %}
+                                <option value="{{ category.id }}"
+                                        {% if transaction and transaction.category_id == category.id %}selected{% endif %}>
+                                    {{ category.icon }} {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label">Notes / Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"
+                                  placeholder="Optional notes about this transaction">{{ transaction.description if transaction else '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('transactions') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> {{ 'Save Changes' if transaction else 'Add Transaction' }}
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+# Docker Compose for SaaS Infrastructure
+# This runs the main SaaS management platform
+# Individual tenant containers are provisioned dynamically
+
+version: '3.8'
+
+services:
+  # Reverse proxy / load balancer
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - saas_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${SAAS_DOMAIN:-financetracker.app}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+
+  # Main SaaS platform (landing page, signups, admin)
+  saas-platform:
+    build: .
+    container_name: saas-platform
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE=/data/saas.db
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_PRICE_PRO_MONTHLY=${STRIPE_PRICE_PRO_MONTHLY}
+      - STRIPE_PRICE_PRO_YEARLY=${STRIPE_PRICE_PRO_YEARLY}
+      - STRIPE_PRICE_FAMILY_MONTHLY=${STRIPE_PRICE_FAMILY_MONTHLY}
+      - STRIPE_PRICE_FAMILY_YEARLY=${STRIPE_PRICE_FAMILY_YEARLY}
+      - SAAS_DOMAIN=${SAAS_DOMAIN:-financetracker.app}
+      - FLASK_ENV=production
+    volumes:
+      - saas_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # For provisioning tenant containers
+    networks:
+      - saas_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.saas.rule=Host(`${SAAS_DOMAIN:-financetracker.app}`) || Host(`www.${SAAS_DOMAIN:-financetracker.app}`)"
+      - "traefik.http.routers.saas.entrypoints=websecure"
+      - "traefik.http.routers.saas.tls.certresolver=letsencrypt"
+      - "traefik.http.services.saas.loadbalancer.server.port=8000"
+      # Redirect www to non-www
+      - "traefik.http.middlewares.www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.www-redirect.redirectregex.replacement=https://$${1}"
+      - "traefik.http.routers.saas.middlewares=www-redirect"
+
+  # Redis for caching and session storage (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - saas_network
+
+networks:
+  saas_network:
+    driver: bridge
+
+volumes:
+  traefik_letsencrypt:
+  saas_data:
+  redis_data:

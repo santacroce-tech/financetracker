@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Budgets - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-piggy-bank"></i> Monthly Budgets</h1>
+    <div class="d-flex gap-2 align-items-center">
+        <select class="form-select" style="width: auto;" onchange="window.location.href='{{ url_for('budgets') }}?month=' + this.value">
+            {% for m in available_months %}
+            <option value="{{ m.month }}" {% if m.month == selected_month %}selected{% endif %}>{{ m.month }}</option>
+            {% endfor %}
+            {% if not available_months %}
+            <option value="{{ selected_month }}" selected>{{ selected_month }}</option>
+            {% endif %}
+        </select>
+        <a href="{{ url_for('add_budget') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Add Budget
+        </a>
+    </div>
+</div>
+
+{% if budgets %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="stat-label">Total Budget</div>
+                    <div class="stat-value">${{ "{:,.2f}".format(total_budget) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-credit-card"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="stat-label">Total Spent</div>
+                    <div class="stat-value">${{ "{:,.2f}".format(total_spent) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="d-flex align-items-center">
+                {% set remaining = total_budget - total_spent %}
+                <div class="stat-icon {% if remaining >= 0 %}bg-success{% else %}bg-warning{% endif %} bg-opacity-10 {% if remaining >= 0 %}text-success{% else %}text-warning{% endif %}">
+                    <i class="bi bi-{% if remaining >= 0 %}check-circle{% else %}exclamation-triangle{% endif %}"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="stat-label">Remaining</div>
+                    <div class="stat-value {% if remaining >= 0 %}text-success{% else %}text-danger{% endif %}">${{ "{:,.2f}".format(remaining) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget List -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list-check"></i> Budget Breakdown for {{ selected_month }}
+    </div>
+    <div class="card-body">
+        {% for budget in budgets %}
+        {% set percentage = (budget.spent / budget.amount * 100) if budget.amount > 0 else 0 %}
+        {% set over_budget = budget.spent > budget.amount %}
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <span style="color: {{ budget.category_color }}; font-size: 1.3rem;">{{ budget.category_icon }}</span>
+                    <strong>{{ budget.category_name }}</strong>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="{% if over_budget %}text-danger fw-bold{% endif %}">
+                        ${{ "{:,.2f}".format(budget.spent) }} / ${{ "{:,.2f}".format(budget.amount) }}
+                    </span>
+                    <div class="dropdown">
+                        <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('edit_budget', budget_id=budget.id) }}">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('transactions') }}?category_id={{ budget.category_id }}&start_date={{ selected_month }}-01&end_date={{ selected_month }}-31">
+                                <i class="bi bi-receipt"></i> View Transactions
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="{{ url_for('delete_budget', budget_id=budget.id) }}" method="POST"
+                                      onsubmit="return confirm('Delete this budget?');">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="progress" style="height: 12px;">
+                <div class="progress-bar {% if over_budget %}bg-danger{% elif percentage > 80 %}bg-warning{% else %}bg-success{% endif %}"
+                     role="progressbar"
+                     style="width: {{ [percentage, 100] | min }}%"
+                     aria-valuenow="{{ percentage }}"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                </div>
+            </div>
+            <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">{{ "{:.1f}".format(percentage) }}% used</small>
+                {% if over_budget %}
+                <small class="text-danger">
+                    <i class="bi bi-exclamation-circle"></i> Over by ${{ "{:,.2f}".format(budget.spent - budget.amount) }}
+                </small>
+                {% else %}
+                <small class="text-muted">${{ "{:,.2f}".format(budget.amount - budget.spent) }} remaining</small>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="bi bi-piggy-bank"></i>
+        <h4>No Budgets Yet</h4>
+        <p class="text-muted">Create budgets to track your spending by category.</p>
+        <a href="{{ url_for('add_budget') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create Your First Budget
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

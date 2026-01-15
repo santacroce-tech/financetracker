@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Category Rules - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-gear"></i> Category Rules</h1>
+    <a href="{{ url_for('add_rule') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add Rule
+    </a>
+</div>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    Category rules automatically assign categories to transactions based on patterns in the description or payee.
+    Rules are applied during import and when using the auto-categorize feature.
+</div>
+
+{% if rules %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Pattern</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Priority</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in rules %}
+                <tr>
+                    <td>
+                        <code>{{ rule.pattern }}</code>
+                        {% if rule.is_regex %}
+                        <span class="badge bg-info">Regex</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="color: {{ rule.category_color }};">{{ rule.category_icon }}</span>
+                        {{ rule.category_name }}
+                    </td>
+                    <td>
+                        <small class="text-muted">{{ rule.match_field }}</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">{{ rule.priority }}</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('edit_rule', rule_id=rule.id) }}"
+                           class="btn btn-sm btn-outline-primary" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('delete_rule', rule_id=rule.id) }}" method="POST"
+                              class="d-inline" onsubmit="return confirm('Delete this rule?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3 text-muted">
+    <small>{{ rules|length }} rule(s) defined. Higher priority rules are matched first.</small>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="bi bi-gear"></i>
+        <h4>No Rules Yet</h4>
+        <p class="text-muted">Create rules to automatically categorize your transactions.</p>
+        <a href="{{ url_for('add_rule') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create Your First Rule
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

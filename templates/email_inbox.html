@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}Email Inbox - Personal Finance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inbox-email {
+        font-family: monospace;
+        background: #f8f9fa;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        user-select: all;
+    }
+    .email-card {
+        border-left: 4px solid #dee2e6;
+        transition: all 0.2s;
+    }
+    .email-card:hover {
+        border-left-color: var(--accent-color);
+    }
+    .email-card.pending {
+        border-left-color: #ffc107;
+    }
+    .email-card.approved {
+        border-left-color: #28a745;
+    }
+    .email-card.rejected {
+        border-left-color: #dc3545;
+        opacity: 0.6;
+    }
+    .parsed-amount {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+    .confidence-badge {
+        font-size: 0.75rem;
+    }
+    .vendor-icon {
+        width: 40px;
+        height: 40px;
+        background: #e9ecef;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .raw-body {
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-envelope-open"></i> Email Inbox</h1>
+    <span class="badge bg-warning" id="pending-count">{{ pending_emails|length }} pending</span>
+</div>
+
+<!-- Inbox Setup -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-gear"></i> Your Email Inbox</span>
+        <span class="badge {% if inbox.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+            {% if inbox.is_active %}Active{% else %}Inactive{% endif %}
+        </span>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">Forward invoices and receipts to this email address. We'll automatically extract transaction details for you to review.</p>
+
+        <div class="row align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <label class="form-label small text-muted">Your Inbox Email</label>
+                <div class="d-flex align-items-center">
+                    <div class="inbox-email flex-grow-1" id="inbox-email">{{ inbox.email_address }}</div>
+                    <button class="btn btn-outline-primary btn-sm ms-2" onclick="copyEmail()" title="Copy">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <form method="POST" action="{{ url_for('email_inbox_settings') }}" class="row g-2 align-items-end">
+                    <div class="col">
+                        <label class="form-label small text-muted">Default Account</label>
+                        <select class="form-select form-select-sm" name="default_account_id">
+                            <option value="">Select account...</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}" {% if inbox.default_account_id == account.id %}selected{% endif %}>
+                                {{ account.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active"
+                                   {% if inbox.is_active %}checked{% endif %}>
+                            <label class="form-check-label small" for="is_active">Active</label>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-3 small">
+            <a href="#" data-bs-toggle="collapse" data-bs-target="#setupHelp">
+                <i class="bi bi-question-circle"></i> How to set up email forwarding
+            </a>
+            <div class="collapse mt-2" id="setupHelp">
+                <div class="card card-body bg-light">
+                    <h6>Gmail</h6>
+                    <p class="mb-2">Settings → See all settings → Forwarding → Add forwarding address</p>
+
+                    <h6>Outlook</h6>
+                    <p class="mb-2">Settings → Mail → Forwarding → Enable forwarding</p>
+
+                    <h6>Or forward manually</h6>
+                    <p class="mb-0">Simply forward any invoice/receipt email to your inbox address above.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Emails -->
+{% if pending_emails %}
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-hourglass-split"></i> Pending Review ({{ pending_emails|length }})
+    </div>
+    <div class="card-body p-0">
+        {% for email in pending_emails %}
+        <div class="email-card pending p-3 border-bottom" data-email-id="{{ email.id }}">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="vendor-icon">
+                        {% if email.parsed_vendor %}
+                        {{ email.parsed_vendor[0] | upper }}
+                        {% else %}
+                        <i class="bi bi-envelope"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>{{ email.parsed_vendor or 'Unknown Vendor' }}</strong>
+                            {% if email.category_name %}
+                            <span class="badge bg-secondary ms-2">{{ email.category_icon }} {{ email.category_name }}</span>
+                            {% endif %}
+                        </div>
+                        {% if email.parsed_amount %}
+                        <div class="parsed-amount text-danger">
+                            -{{ email.parsed_currency }} {{ "{:,.2f}".format(email.parsed_amount) }}
+                        </div>
+                        {% else %}
+                        <div class="text-muted">Amount not detected</div>
+                        {% endif %}
+                    </div>
+                    <div class="small text-muted">
+                        <i class="bi bi-envelope"></i> {{ email.subject[:60] }}{% if email.subject|length > 60 %}...{% endif %}
+                    </div>
+                    <div class="small text-muted">
+                        <i class="bi bi-calendar"></i> {{ email.parsed_date or 'Date not detected' }}
+                        <span class="ms-2"><i class="bi bi-person"></i> {{ email.sender_email }}</span>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-success" onclick="approveEmail({{ email.id }})" title="Approve">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="editEmail({{ email.id }})" title="Edit & Approve">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="rejectEmail({{ email.id }})" title="Reject">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-body empty-state">
+        <i class="bi bi-inbox text-success"></i>
+        <h4>No Pending Emails</h4>
+        <p class="text-muted">Forward invoices and receipts to <strong>{{ inbox.email_address }}</strong></p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Processed -->
+{% if processed_emails %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-clock-history"></i> Recently Processed
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Vendor</th>
+                    <th>Subject</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for email in processed_emails %}
+                <tr class="{% if email.status == 'rejected' %}text-muted{% endif %}">
+                    <td>{{ email.received_at[:10] if email.received_at else '-' }}</td>
+                    <td>{{ email.parsed_vendor or '-' }}</td>
+                    <td>{{ email.subject[:40] }}{% if email.subject|length > 40 %}...{% endif %}</td>
+                    <td>
+                        {% if email.transaction_amount %}
+                        {{ email.parsed_currency }} {{ "{:,.2f}".format(email.transaction_amount) }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if email.status == 'approved' %}
+                        <span class="badge bg-success">Approved</span>
+                        {% elif email.status == 'rejected' %}
+                        <span class="badge bg-secondary">Rejected</span>
+                        {% else %}
+                        <span class="badge bg-warning">{{ email.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit & Approve Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Vendor</label>
+                            <input type="text" class="form-control" id="edit-vendor" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount *</label>
+                            <div class="input-group">
+                                <select class="form-select" id="edit-currency" style="max-width: 80px;">
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="GBP">GBP</option>
+                                </select>
+                                <input type="number" class="form-control" id="edit-amount" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date *</label>
+                            <input type="date" class="form-control" id="edit-date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Account *</label>
+                            <select class="form-select" id="edit-account" required>
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}" {% if inbox.default_account_id == account.id %}selected{% endif %}>
+                                    {{ account.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="edit-category">
+                                <option value="">Uncategorized</option>
+                                <optgroup label="Expenses">
+                                    {% for cat in categories if cat.category_type == 'expense' %}
+                                    <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Income">
+                                    {% for cat in categories if cat.category_type == 'income' %}
+                                    <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control" id="edit-description">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Original Email</label>
+                        <div class="raw-body" id="edit-raw-body"></div>
+                    </div>
+                </div>
+
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="edit-create-rule">
+                    <label class="form-check-label" for="edit-create-rule">
+                        Create rule to auto-categorize similar emails
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger me-auto" onclick="rejectFromModal()">
+                    <i class="bi bi-x"></i> Reject
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="saveFromModal()">
+                    <i class="bi bi-check"></i> Approve Transaction
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentEmailId = null;
+const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+
+// Email data cache
+const emailData = {
+    {% for email in pending_emails %}
+    {{ email.id }}: {
+        vendor: "{{ email.parsed_vendor or '' }}",
+        amount: {{ email.parsed_amount or 'null' }},
+        currency: "{{ email.parsed_currency or 'EUR' }}",
+        date: "{{ email.parsed_date or '' }}",
+        description: "{{ email.parsed_description or '' }}",
+        category_id: {{ email.suggested_category_id or 'null' }},
+        subject: "{{ email.subject | e }}",
+        raw_body: `{{ email.raw_body | e if email.raw_body else '' }}`
+    },
+    {% endfor %}
+};
+
+function copyEmail() {
+    const email = document.getElementById('inbox-email').textContent;
+    navigator.clipboard.writeText(email).then(() => {
+        alert('Email copied to clipboard!');
+    });
+}
+
+function approveEmail(emailId) {
+    const data = emailData[emailId];
+
+    if (!data.amount) {
+        editEmail(emailId);
+        return;
+    }
+
+    fetch(`/api/email/${emailId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            amount: data.amount,
+            date: data.date,
+            category_id: data.category_id
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            document.querySelector(`[data-email-id="${emailId}"]`).remove();
+            updatePendingCount();
+        } else {
+            alert(result.error || 'Error approving transaction');
+        }
+    });
+}
+
+function editEmail(emailId) {
+    currentEmailId = emailId;
+    const data = emailData[emailId];
+
+    document.getElementById('edit-vendor').value = data.vendor;
+    document.getElementById('edit-amount').value = data.amount || '';
+    document.getElementById('edit-currency').value = data.currency;
+    document.getElementById('edit-date').value = data.date || new Date().toISOString().split('T')[0];
+    document.getElementById('edit-description').value = data.description;
+    document.getElementById('edit-raw-body').textContent = data.raw_body || data.subject;
+
+    if (data.category_id) {
+        document.getElementById('edit-category').value = data.category_id;
+    }
+
+    editModal.show();
+}
+
+function saveFromModal() {
+    const amount = parseFloat(document.getElementById('edit-amount').value);
+    const date = document.getElementById('edit-date').value;
+    const accountId = document.getElementById('edit-account').value;
+    const categoryId = document.getElementById('edit-category').value || null;
+    const description = document.getElementById('edit-description').value;
+    const createRule = document.getElementById('edit-create-rule').checked;
+
+    if (!amount || !date || !accountId) {
+        alert('Please fill in amount, date, and account');
+        return;
+    }
+
+    // If create rule is checked, create it first
+    if (createRule && categoryId && emailData[currentEmailId].vendor) {
+        fetch(`/api/email/${currentEmailId}/create-rule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pattern: emailData[currentEmailId].vendor,
+                category_id: categoryId
+            })
+        });
+    }
+
+    fetch(`/api/email/${currentEmailId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            amount: amount,
+            date: date,
+            account_id: accountId,
+            category_id: categoryId,
+            description: description
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            editModal.hide();
+            document.querySelector(`[data-email-id="${currentEmailId}"]`).remove();
+            updatePendingCount();
+        } else {
+            alert(result.error || 'Error approving transaction');
+        }
+    });
+}
+
+function rejectEmail(emailId) {
+    if (!confirm('Reject this email? It will be ignored.')) return;
+
+    fetch(`/api/email/${emailId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            document.querySelector(`[data-email-id="${emailId}"]`).remove();
+            updatePendingCount();
+        }
+    });
+}
+
+function rejectFromModal() {
+    editModal.hide();
+    rejectEmail(currentEmailId);
+}
+
+function updatePendingCount() {
+    const count = document.querySelectorAll('.email-card.pending').length;
+    document.getElementById('pending-count').textContent = count + ' pending';
+
+    if (count === 0) {
+        location.reload();
+    }
+}
+</script>
+{% endblock %}

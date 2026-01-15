@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-receipt"></i> Transactions</h1>
+    <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add Transaction
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">Account</label>
+                <select class="form-select form-select-sm" name="account_id">
+                    <option value="">All Accounts</option>
+                    {% for account in accounts %}
+                    <option value="{{ account.id }}" {% if filters.account_id == account.id %}selected{% endif %}>
+                        {{ account.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Category</label>
+                <select class="form-select form-select-sm" name="category_id">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if filters.category_id == category.id %}selected{% endif %}>
+                        {{ category.icon }} {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Type</label>
+                <select class="form-select form-select-sm" name="type">
+                    <option value="">All Types</option>
+                    <option value="income" {% if filters.type == 'income' %}selected{% endif %}>Income</option>
+                    <option value="expense" {% if filters.type == 'expense' %}selected{% endif %}>Expense</option>
+                    <option value="transfer" {% if filters.type == 'transfer' %}selected{% endif %}>Transfer</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" class="form-control form-control-sm" name="start_date"
+                       value="{{ filters.start_date or '' }}">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" class="form-control form-control-sm" name="end_date"
+                       value="{{ filters.end_date or '' }}">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control form-control-sm" name="search"
+                       value="{{ filters.search or '' }}" placeholder="Description or payee...">
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-funnel"></i> Apply Filters
+                </button>
+                <a href="{{ url_for('transactions') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Transactions Table -->
+{% if transactions %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Account</th>
+                    <th class="text-end">Amount</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trans in transactions %}
+                <tr>
+                    <td>{{ trans.date }}</td>
+                    <td>
+                        <strong>{{ trans.payee or trans.description or 'No description' }}</strong>
+                        {% if trans.payee and trans.description %}
+                        <br><small class="text-muted">{{ trans.description }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if trans.category_name %}
+                        <span class="category-icon">{{ trans.category_icon }}</span>
+                        {{ trans.category_name }}
+                        {% else %}
+                        <span class="text-muted">Uncategorized</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ trans.account_name }}</td>
+                    <td class="text-end">
+                        <span class="badge badge-{{ trans.transaction_type }}">
+                            {{ trans.transaction_type | capitalize }}
+                        </span>
+                        <br>
+                        <strong class="{% if trans.transaction_type == 'income' %}transaction-income{% else %}transaction-expense{% endif %}">
+                            {% if trans.transaction_type == 'income' %}+{% else %}-{% endif %}${{ "{:,.2f}".format(trans.amount) }}
+                        </strong>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('edit_transaction', transaction_id=trans.id) }}"
+                           class="btn btn-sm btn-outline-primary" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('delete_transaction', transaction_id=trans.id) }}" method="POST"
+                              class="d-inline" onsubmit="return confirm('Delete this transaction?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3 text-muted">
+    <small>Showing {{ transactions|length }} transaction(s)</small>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="bi bi-receipt"></i>
+        <h4>No Transactions Found</h4>
+        {% if filters.account_id or filters.category_id or filters.type or filters.start_date or filters.end_date or filters.search %}
+        <p class="text-muted">No transactions match your filters.</p>
+        <a href="{{ url_for('transactions') }}" class="btn btn-outline-primary">Clear Filters</a>
+        {% else %}
+        <p class="text-muted">Start tracking your finances by adding your first transaction.</p>
+        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Add Your First Transaction
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

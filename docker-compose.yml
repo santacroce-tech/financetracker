@@ -1,0 +1,27 @@
+# Docker Compose for self-hosted FinanceTracker
+# Usage: docker-compose up -d
+
+version: '3.8'
+
+services:
+  financetracker:
+    build: .
+    container_name: financetracker
+    restart: unless-stopped
+    ports:
+      - "5000:8000"
+    volumes:
+      - finance_data:/data
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - DATABASE=/data/finance.db
+      - FLASK_ENV=production
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  finance_data:
+    driver: local

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Your Free Trial - FinanceTracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .signup-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .signup-header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .signup-body {
+            padding: 2rem;
+        }
+        .subdomain-input {
+            display: flex;
+            align-items: center;
+        }
+        .subdomain-input input {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .subdomain-input .input-group-text {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            background: #f8f9fa;
+            color: #666;
+        }
+        .plan-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: rgba(255,255,255,0.9);
+        }
+        .feature-list li i {
+            color: #2ecc71;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="signup-card">
+                    <div class="row g-0">
+                        <!-- Left side - Benefits -->
+                        <div class="col-md-5 signup-header">
+                            <a href="{{ url_for('saas.landing') }}" class="text-white text-decoration-none">
+                                <h4><i class="bi bi-wallet2"></i> FinanceTracker</h4>
+                            </a>
+                            <div class="plan-badge mt-3">
+                                {% if plan == 'family' %}
+                                Cloud Family Plan
+                                {% else %}
+                                Cloud Pro Plan
+                                {% endif %}
+                            </div>
+                            <h2 class="mt-4">Start Your 14-Day Free Trial</h2>
+                            <p class="opacity-75">No credit card required</p>
+
+                            <ul class="feature-list text-start mt-4">
+                                <li><i class="bi bi-check-circle-fill"></i> Your own subdomain</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Automatic daily backups</li>
+                                <li><i class="bi bi-check-circle-fill"></i> SSL certificate included</li>
+                                <li><i class="bi bi-check-circle-fill"></i> EU data residency</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Priority support</li>
+                                {% if plan == 'family' %}
+                                <li><i class="bi bi-check-circle-fill"></i> Up to 5 users</li>
+                                <li><i class="bi bi-check-circle-fill"></i> Custom domain support</li>
+                                {% endif %}
+                            </ul>
+
+                            <div class="mt-4 pt-4 border-top border-white border-opacity-25">
+                                <p class="small opacity-75 mb-0">
+                                    <i class="bi bi-shield-check"></i> GDPR Compliant
+                                    <i class="bi bi-lock ms-3"></i> Bank-Level Security
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Right side - Form -->
+                        <div class="col-md-7 signup-body">
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                    {% for category, message in messages %}
+                                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %}
+
+                            <h4 class="mb-4">Create Your Account</h4>
+
+                            <form method="POST">
+                                <input type="hidden" name="plan" value="{{ plan }}">
+
+                                <div class="mb-3">
+                                    <label class="form-label">Choose Your Subdomain *</label>
+                                    <div class="subdomain-input input-group">
+                                        <input type="text" class="form-control" name="subdomain"
+                                               placeholder="yourcompany" required
+                                               pattern="[a-z0-9][a-z0-9-]*[a-z0-9]"
+                                               minlength="3" maxlength="30"
+                                               oninput="this.value = this.value.toLowerCase()">
+                                        <span class="input-group-text">.financetracker.app</span>
+                                    </div>
+                                    <div class="form-text">Lowercase letters, numbers, and hyphens only</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Company / Organization Name</label>
+                                    <input type="text" class="form-control" name="company_name"
+                                           placeholder="Acme Inc.">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" name="email"
+                                           placeholder="you@example.com" required>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label">Password *</label>
+                                    <input type="password" class="form-control" name="password"
+                                           placeholder="Minimum 8 characters" required minlength="8">
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="terms" required>
+                                        <label class="form-check-label small" for="terms">
+                                            I agree to the <a href="#" target="_blank">Terms of Service</a>
+                                            and <a href="#" target="_blank">Privacy Policy</a>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="bi bi-rocket"></i> Create My Account
+                                </button>
+
+                                <p class="text-center text-muted small mt-3 mb-0">
+                                    Already have an account?
+                                    <a href="{{ url_for('login') }}">Sign in</a>
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-center text-white-50 mt-4 small">
+                    <i class="bi bi-credit-card"></i> After your trial, plans start at &euro;9/month.
+                    Cancel anytime.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

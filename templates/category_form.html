@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Category' if category else 'Add Category' }} - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-tags"></i> {{ 'Edit Category' if category else 'Add Category' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Category Name *</label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               value="{{ category.name if category else '' }}" required
+                               placeholder="e.g., Groceries, Salary, Utilities">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Category Type *</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="category_type" id="type_expense"
+                                   value="expense" {% if not category or category.category_type == 'expense' %}checked{% endif %}>
+                            <label class="btn btn-outline-danger" for="type_expense">
+                                <i class="bi bi-arrow-up-circle"></i> Expense
+                            </label>
+
+                            <input type="radio" class="btn-check" name="category_type" id="type_income"
+                                   value="income" {% if category and category.category_type == 'income' %}checked{% endif %}>
+                            <label class="btn btn-outline-success" for="type_income">
+                                <i class="bi bi-arrow-down-circle"></i> Income
+                            </label>
+
+                            <input type="radio" class="btn-check" name="category_type" id="type_transfer"
+                                   value="transfer" {% if category and category.category_type == 'transfer' %}checked{% endif %}>
+                            <label class="btn btn-outline-secondary" for="type_transfer">
+                                <i class="bi bi-arrow-left-right"></i> Transfer
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="icon" class="form-label">Icon (Emoji)</label>
+                        <input type="text" class="form-control" id="icon" name="icon"
+                               value="{{ category.icon if category else '' }}"
+                               placeholder="e.g., &#128176; &#127968; &#128663; (paste an emoji)">
+                        <div class="form-text">
+                            Common emojis:
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">💰</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">🛒</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">🏠</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">🚗</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">💡</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">🍽️</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">🎬</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">🏥</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">✈️</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">🎓</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">🎁</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">💳</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">📱</span>
+                            <span class="emoji-picker" role="button" onclick="setIcon(this.textContent)">👕</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="color" class="form-label">Color</label>
+                        <div class="input-group">
+                            <input type="color" class="form-control form-control-color" id="color" name="color"
+                                   value="{{ category.color if category else '#6c757d' }}" style="width: 60px;">
+                            <input type="text" class="form-control" id="color_text"
+                                   value="{{ category.color if category else '#6c757d' }}"
+                                   pattern="^#[0-9A-Fa-f]{6}$" placeholder="#6c757d">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('categories') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> {{ 'Save Changes' if category else 'Create Category' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .emoji-picker {
+        cursor: pointer;
+        font-size: 1.3rem;
+        padding: 0.2rem;
+        transition: transform 0.1s;
+    }
+    .emoji-picker:hover {
+        transform: scale(1.3);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setIcon(emoji) {
+    document.getElementById('icon').value = emoji;
+}
+
+// Sync color picker with text input
+document.getElementById('color').addEventListener('input', function() {
+    document.getElementById('color_text').value = this.value;
+});
+
+document.getElementById('color_text').addEventListener('input', function() {
+    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+        document.getElementById('color').value = this.value;
+    }
+});
+</script>
+{% endblock %}

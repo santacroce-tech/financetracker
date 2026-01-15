@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Add Transaction
+    </a>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Balance</div>
+                    <div class="stat-value {% if total_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        ${{ "{:,.2f}".format(total_balance) }}
+                    </div>
+                </div>
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Monthly Income</div>
+                    <div class="stat-value text-success">
+                        ${{ "{:,.2f}".format(monthly_income) }}
+                    </div>
+                </div>
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-arrow-down-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Monthly Expenses</div>
+                    <div class="stat-value text-danger">
+                        ${{ "{:,.2f}".format(monthly_expenses) }}
+                    </div>
+                </div>
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-arrow-up-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Accounts Overview -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bank"></i> Accounts</span>
+                <a href="{{ url_for('add_account') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if accounts %}
+                    {% for account in accounts %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <div>
+                            <strong>{{ account.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ account.account_type | capitalize }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="{% if account.calculated_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                ${{ "{:,.2f}".format(account.calculated_balance) }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-bank"></i>
+                        <p>No accounts yet</p>
+                        <a href="{{ url_for('add_account') }}" class="btn btn-primary btn-sm">Add Account</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Spending by Category -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> Spending by Category
+            </div>
+            <div class="card-body">
+                {% if category_spending %}
+                    <canvas id="categoryChart" height="200"></canvas>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-pie-chart"></i>
+                        <p>No spending data this month</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-receipt"></i> Recent Transactions</span>
+                <a href="{{ url_for('transactions') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% if recent_transactions %}
+                    {% for trans in recent_transactions %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <div>
+                            <span class="category-icon">{{ trans.category_icon or '📁' }}</span>
+                            <strong>{{ trans.payee or trans.description or 'No description' }}</strong>
+                            <br>
+                            <small class="text-muted">{{ trans.date }} &middot; {{ trans.account_name }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="{% if trans.transaction_type == 'income' %}transaction-income{% else %}transaction-expense{% endif %}">
+                                {% if trans.transaction_type == 'income' %}+{% else %}-{% endif %}${{ "{:,.2f}".format(trans.amount) }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-receipt"></i>
+                        <p>No transactions yet</p>
+                        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-sm">Add Transaction</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if category_spending %}
+<script>
+const ctx = document.getElementById('categoryChart').getContext('2d');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for cat in category_spending %}'{{ cat.icon }} {{ cat.name }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for cat in category_spending %}{{ cat.total }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [{% for cat in category_spending %}'{{ cat.color }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 12,
+                    padding: 10
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

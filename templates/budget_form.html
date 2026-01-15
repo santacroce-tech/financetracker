@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Budget' if budget else 'Add Budget' }} - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-piggy-bank"></i> {{ 'Edit Budget' if budget else 'Add Budget' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% if budget %}
+                    <!-- Editing existing budget - show category as read-only -->
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <div class="form-control bg-light">
+                            <span style="font-size: 1.2rem;">{{ budget.category_icon }}</span>
+                            {{ budget.category_name }}
+                        </div>
+                        <div class="form-text">Category cannot be changed. Delete this budget and create a new one if needed.</div>
+                    </div>
+                    {% else %}
+                    <!-- Adding new budget - show category dropdown -->
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Category *</label>
+                        {% if categories %}
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Select an expense category...</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Only expense categories without existing budgets are shown.</div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            All expense categories already have budgets assigned, or you haven't created any expense categories yet.
+                            <br><br>
+                            <a href="{{ url_for('add_category') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-plus"></i> Add Category
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Monthly Budget Amount *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="amount" name="amount"
+                                   value="{{ budget.amount if budget else '' }}"
+                                   min="0.01" step="0.01" required
+                                   placeholder="0.00">
+                        </div>
+                        <div class="form-text">Set your monthly spending limit for this category.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('budgets') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        {% if budget or categories %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> {{ 'Save Changes' if budget else 'Create Budget' }}
+                        </button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

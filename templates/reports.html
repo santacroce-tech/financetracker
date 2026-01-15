@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Personal Finance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-bar-chart"></i> Reports</h1>
+</div>
+
+<div class="row">
+    <!-- Monthly Income vs Expenses -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Monthly Income vs Expenses
+            </div>
+            <div class="card-body">
+                {% if monthly_data %}
+                <canvas id="monthlyChart" height="100"></canvas>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-graph-up"></i>
+                    <p>No data available yet. Add some transactions to see your trends.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Spending by Category -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-pie-chart"></i> Spending by Category</span>
+                <select class="form-select form-select-sm" style="width: auto;" onchange="window.location.href='{{ url_for('reports') }}?month=' + this.value">
+                    {% for m in available_months %}
+                    <option value="{{ m.month }}" {% if m.month == selected_month %}selected{% endif %}>{{ m.month }}</option>
+                    {% endfor %}
+                    {% if not available_months %}
+                    <option value="{{ selected_month }}" selected>{{ selected_month }}</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="card-body">
+                {% if category_data %}
+                <canvas id="categoryChart" height="200"></canvas>
+                <hr>
+                <div class="category-breakdown">
+                    {% for cat in category_data %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="badge" style="background-color: {{ cat.color }}; width: 12px; height: 12px; display: inline-block; border-radius: 50%;"></span>
+                            {{ cat.name }}
+                        </div>
+                        <strong>${{ "{:,.2f}".format(cat.total) }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-pie-chart"></i>
+                    <p>No spending data this month.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Top Payees -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-shop"></i> Top Payees (All Time)
+            </div>
+            <div class="card-body">
+                {% if top_payees %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Payee</th>
+                                <th class="text-end">Transactions</th>
+                                <th class="text-end">Total Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payee in top_payees %}
+                            <tr>
+                                <td>{{ payee.payee }}</td>
+                                <td class="text-end">{{ payee.count }}</td>
+                                <td class="text-end text-danger">${{ "{:,.2f}".format(payee.total) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-shop"></i>
+                    <p>No payee data available.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calculator"></i> Summary Statistics
+            </div>
+            <div class="card-body">
+                {% if monthly_data %}
+                {% set total_income = monthly_data | sum(attribute='income') %}
+                {% set total_expenses = monthly_data | sum(attribute='expenses') %}
+                {% set net_savings = total_income - total_expenses %}
+                {% set avg_monthly_income = total_income / (monthly_data | length) if monthly_data else 0 %}
+                {% set avg_monthly_expenses = total_expenses / (monthly_data | length) if monthly_data else 0 %}
+
+                <div class="row text-center">
+                    <div class="col-6 mb-4">
+                        <div class="text-muted small">Total Income ({{ monthly_data | length }} months)</div>
+                        <div class="fs-4 text-success">${{ "{:,.2f}".format(total_income) }}</div>
+                    </div>
+                    <div class="col-6 mb-4">
+                        <div class="text-muted small">Total Expenses ({{ monthly_data | length }} months)</div>
+                        <div class="fs-4 text-danger">${{ "{:,.2f}".format(total_expenses) }}</div>
+                    </div>
+                    <div class="col-6 mb-4">
+                        <div class="text-muted small">Avg Monthly Income</div>
+                        <div class="fs-4 text-success">${{ "{:,.2f}".format(avg_monthly_income) }}</div>
+                    </div>
+                    <div class="col-6 mb-4">
+                        <div class="text-muted small">Avg Monthly Expenses</div>
+                        <div class="fs-4 text-danger">${{ "{:,.2f}".format(avg_monthly_expenses) }}</div>
+                    </div>
+                    <div class="col-12">
+                        <hr>
+                        <div class="text-muted small">Net Savings</div>
+                        <div class="fs-3 {% if net_savings >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            ${{ "{:,.2f}".format(net_savings) }}
+                        </div>
+                        {% if total_income > 0 %}
+                        <div class="text-muted small">
+                            Savings Rate: {{ "{:.1f}".format((net_savings / total_income) * 100) }}%
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-calculator"></i>
+                    <p>Add transactions to see summary statistics.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if monthly_data %}
+<script>
+// Monthly Income vs Expenses Chart
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+new Chart(monthlyCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for row in monthly_data %}'{{ row.month }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Income',
+            data: [{% for row in monthly_data %}{{ row.income }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: 'rgba(39, 174, 96, 0.7)',
+            borderColor: 'rgba(39, 174, 96, 1)',
+            borderWidth: 1
+        }, {
+            label: 'Expenses',
+            data: [{% for row in monthly_data %}{{ row.expenses }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+            borderColor: 'rgba(231, 76, 60, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': $' + context.raw.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+
+{% if category_data %}
+<script>
+// Category Spending Chart
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for cat in category_data %}'{{ cat.name }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for cat in category_data %}{{ cat.total }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [{% for cat in category_data %}'{{ cat.color }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.label + ': $' + context.raw.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

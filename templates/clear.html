@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}Clear Transactions - Personal Finance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .transaction-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #dee2e6;
+    }
+    .transaction-card.active {
+        border-left-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+    }
+    .transaction-card.cleared {
+        opacity: 0.5;
+        transform: translateX(20px);
+    }
+    .transaction-card.removing {
+        opacity: 0;
+        transform: translateX(100px);
+        max-height: 0;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    .category-btn {
+        margin: 2px;
+        font-size: 0.85rem;
+        transition: transform 0.1s;
+    }
+    .category-btn:hover {
+        transform: scale(1.05);
+    }
+    .category-btn.selected {
+        box-shadow: 0 0 0 3px rgba(0,0,0,0.2);
+    }
+    .keyboard-hint {
+        font-size: 0.7rem;
+        background: #333;
+        color: white;
+        padding: 1px 5px;
+        border-radius: 3px;
+        margin-left: 5px;
+    }
+    .shortcut-panel {
+        position: sticky;
+        top: 1rem;
+    }
+    .amount-income { color: var(--success-color); }
+    .amount-expense { color: var(--danger-color); }
+    #rule-pattern {
+        font-family: monospace;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-check2-square"></i> Clear Transactions</h1>
+    <div>
+        <button id="auto-categorize-btn" class="btn btn-outline-primary me-2">
+            <i class="bi bi-magic"></i> Auto-Categorize All
+        </button>
+        <span class="badge bg-secondary" id="remaining-count">{{ transactions|length }} remaining</span>
+    </div>
+</div>
+
+{% if transactions %}
+<div class="row">
+    <!-- Transactions List -->
+    <div class="col-lg-8">
+        <div id="transactions-container">
+            {% for trans in transactions %}
+            <div class="card transaction-card mb-3" data-id="{{ trans.id }}" data-index="{{ loop.index0 }}"
+                 data-description="{{ trans.description }}" data-payee="{{ trans.payee }}">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <small class="text-muted">{{ trans.date }}</small>
+                        </div>
+                        <div class="col-md-5">
+                            <strong>{{ trans.payee or 'No payee' }}</strong>
+                            <br>
+                            <small class="text-muted">{{ trans.description or 'No description' }}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">{{ trans.account_name }}</small>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <strong class="{% if trans.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+                                {% if trans.transaction_type == 'income' %}+{% else %}-{% endif %}${{ "{:,.2f}".format(trans.amount) }}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Categories & Shortcuts Panel -->
+    <div class="col-lg-4">
+        <div class="shortcut-panel">
+            <!-- Keyboard Shortcuts Help -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-keyboard"></i> Keyboard Shortcuts
+                </div>
+                <div class="card-body small">
+                    <p class="mb-1"><kbd>j</kbd> / <kbd>k</kbd> or <kbd>Arrow Down</kbd> / <kbd>Arrow Up</kbd> - Navigate transactions</p>
+                    <p class="mb-1"><kbd>1</kbd>-<kbd>9</kbd> - Quick assign category</p>
+                    <p class="mb-1"><kbd>Enter</kbd> - Confirm and move to next</p>
+                    <p class="mb-1"><kbd>r</kbd> - Create rule from current transaction</p>
+                    <p class="mb-0"><kbd>s</kbd> - Skip to next transaction</p>
+                </div>
+            </div>
+
+            <!-- Quick Categories -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-tags"></i> Quick Categories
+                </div>
+                <div class="card-body">
+                    <div class="mb-2"><strong>Expenses:</strong></div>
+                    <div class="d-flex flex-wrap mb-3">
+                        {% set expense_index = namespace(value=1) %}
+                        {% for cat in categories if cat.category_type == 'expense' %}
+                        <button class="btn btn-outline-secondary btn-sm category-btn"
+                                data-category-id="{{ cat.id }}"
+                                data-category-name="{{ cat.name }}"
+                                style="border-color: {{ cat.color }}; color: {{ cat.color }};">
+                            {{ cat.icon }} {{ cat.name }}
+                            {% if expense_index.value <= 9 %}
+                            <span class="keyboard-hint">{{ expense_index.value }}</span>
+                            {% set expense_index.value = expense_index.value + 1 %}
+                            {% endif %}
+                        </button>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-2"><strong>Income:</strong></div>
+                    <div class="d-flex flex-wrap">
+                        {% for cat in categories if cat.category_type == 'income' %}
+                        <button class="btn btn-outline-success btn-sm category-btn"
+                                data-category-id="{{ cat.id }}"
+                                data-category-name="{{ cat.name }}">
+                            {{ cat.icon }} {{ cat.name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Category -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-check-circle"></i> Selected Category
+                </div>
+                <div class="card-body">
+                    <div id="selected-category" class="text-muted">None selected</div>
+                    <button id="apply-category-btn" class="btn btn-primary btn-sm mt-2 w-100" disabled>
+                        <i class="bi bi-check"></i> Apply <kbd>Enter</kbd>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Rule Modal -->
+<div class="modal fade" id="ruleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create Category Rule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Create a rule to automatically categorize similar transactions in the future.</p>
+
+                <div class="mb-3">
+                    <label class="form-label">Pattern to Match</label>
+                    <input type="text" class="form-control" id="rule-pattern" placeholder="Enter text pattern...">
+                    <div class="form-text">This text will be matched against transaction descriptions and payees.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="rule-category">
+                        <optgroup label="Expenses">
+                            {% for cat in categories if cat.category_type == 'expense' %}
+                            <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="Income">
+                            {% for cat in categories if cat.category_type == 'income' %}
+                            <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-rule-btn">
+                    <i class="bi bi-check"></i> Create Rule & Categorize
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="bi bi-check-circle text-success"></i>
+        <h4>All Caught Up!</h4>
+        <p class="text-muted">All your transactions have been categorized.</p>
+        <a href="{{ url_for('transactions') }}" class="btn btn-primary">View Transactions</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentIndex = 0;
+    let selectedCategoryId = null;
+    let selectedCategoryName = null;
+    const cards = document.querySelectorAll('.transaction-card');
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    const selectedCategoryDiv = document.getElementById('selected-category');
+    const applyBtn = document.getElementById('apply-category-btn');
+    const remainingCount = document.getElementById('remaining-count');
+    const ruleModal = new bootstrap.Modal(document.getElementById('ruleModal'));
+
+    // Initialize first card as active
+    if (cards.length > 0) {
+        cards[0].classList.add('active');
+    }
+
+    function updateActiveCard(newIndex) {
+        if (newIndex < 0 || newIndex >= cards.length) return;
+
+        // Find next non-cleared card
+        let targetIndex = newIndex;
+        while (targetIndex < cards.length && cards[targetIndex].classList.contains('cleared')) {
+            targetIndex++;
+        }
+        if (targetIndex >= cards.length) {
+            targetIndex = newIndex;
+            while (targetIndex >= 0 && cards[targetIndex].classList.contains('cleared')) {
+                targetIndex--;
+            }
+        }
+        if (targetIndex < 0) return;
+
+        cards[currentIndex]?.classList.remove('active');
+        currentIndex = targetIndex;
+        cards[currentIndex].classList.add('active');
+        cards[currentIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function selectCategory(categoryId, categoryName) {
+        selectedCategoryId = categoryId;
+        selectedCategoryName = categoryName;
+        selectedCategoryDiv.innerHTML = `<strong>${categoryName}</strong>`;
+        applyBtn.disabled = false;
+
+        categoryBtns.forEach(btn => {
+            btn.classList.remove('selected');
+            if (btn.dataset.categoryId == categoryId) {
+                btn.classList.add('selected');
+            }
+        });
+    }
+
+    function applyCategory() {
+        if (!selectedCategoryId || currentIndex >= cards.length) return;
+
+        const card = cards[currentIndex];
+        const transactionId = card.dataset.id;
+
+        fetch(`/api/transaction/${transactionId}/categorize`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category_id: selectedCategoryId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                card.classList.add('cleared');
+                setTimeout(() => {
+                    card.classList.add('removing');
+                    updateRemainingCount();
+                    moveToNext();
+                }, 200);
+            }
+        });
+    }
+
+    function moveToNext() {
+        let nextIndex = currentIndex + 1;
+        while (nextIndex < cards.length && cards[nextIndex].classList.contains('cleared')) {
+            nextIndex++;
+        }
+        if (nextIndex < cards.length) {
+            updateActiveCard(nextIndex);
+        }
+    }
+
+    function updateRemainingCount() {
+        const remaining = document.querySelectorAll('.transaction-card:not(.cleared)').length;
+        remainingCount.textContent = `${remaining} remaining`;
+    }
+
+    function openRuleModal() {
+        if (currentIndex >= cards.length) return;
+
+        const card = cards[currentIndex];
+        const description = card.dataset.description || '';
+        const payee = card.dataset.payee || '';
+
+        // Suggest pattern from payee or description
+        let suggestedPattern = payee || description.split(' ').slice(0, 3).join(' ');
+        document.getElementById('rule-pattern').value = suggestedPattern;
+
+        if (selectedCategoryId) {
+            document.getElementById('rule-category').value = selectedCategoryId;
+        }
+
+        ruleModal.show();
+    }
+
+    // Category button clicks
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            selectCategory(this.dataset.categoryId, this.dataset.categoryName);
+        });
+    });
+
+    // Apply button click
+    applyBtn.addEventListener('click', applyCategory);
+
+    // Save rule button
+    document.getElementById('save-rule-btn').addEventListener('click', function() {
+        const pattern = document.getElementById('rule-pattern').value.trim();
+        const categoryId = document.getElementById('rule-category').value;
+        const card = cards[currentIndex];
+        const transactionId = card.dataset.id;
+
+        if (!pattern) {
+            alert('Please enter a pattern');
+            return;
+        }
+
+        fetch(`/api/transaction/${transactionId}/create-rule`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category_id: categoryId, pattern: pattern })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                ruleModal.hide();
+                card.classList.add('cleared');
+                setTimeout(() => {
+                    card.classList.add('removing');
+                    updateRemainingCount();
+                    moveToNext();
+                }, 200);
+            }
+        });
+    });
+
+    // Auto-categorize button
+    document.getElementById('auto-categorize-btn')?.addEventListener('click', function() {
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+
+        fetch('/api/auto-categorize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Auto-categorized ${data.categorized} transactions!`);
+                location.reload();
+            }
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="bi bi-magic"></i> Auto-Categorize All';
+        });
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        // Don't capture keys when typing in inputs
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+            return;
+        }
+
+        switch(e.key) {
+            case 'j':
+            case 'ArrowDown':
+                e.preventDefault();
+                updateActiveCard(currentIndex + 1);
+                break;
+            case 'k':
+            case 'ArrowUp':
+                e.preventDefault();
+                updateActiveCard(currentIndex - 1);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                applyCategory();
+                break;
+            case 'r':
+                e.preventDefault();
+                openRuleModal();
+                break;
+            case 's':
+                e.preventDefault();
+                moveToNext();
+                break;
+            case '1': case '2': case '3': case '4': case '5':
+            case '6': case '7': case '8': case '9':
+                e.preventDefault();
+                const index = parseInt(e.key) - 1;
+                const expenseBtns = Array.from(categoryBtns).filter(btn =>
+                    btn.closest('.card-body').querySelector('strong')?.textContent.includes('Expenses')
+                );
+                if (expenseBtns[index]) {
+                    selectCategory(expenseBtns[index].dataset.categoryId, expenseBtns[index].dataset.categoryName);
+                }
+                break;
+        }
+    });
+});
+</script>
+{% endblock %}
