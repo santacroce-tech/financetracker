@@ -20,6 +20,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-i
 app.config['DATABASE'] = os.environ.get('DATABASE', 'finance.db')
 app.config['SAAS_MODE'] = os.environ.get('SAAS_MODE', 'false').lower() == 'true'
 app.config['REGISTRATION_ENABLED'] = os.environ.get('REGISTRATION_ENABLED', 'true').lower() == 'true'
+app.config['DEMO_MODE'] = os.environ.get('DEMO_MODE', 'false').lower() == 'true'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -177,6 +178,83 @@ def create_default_categories(user_id):
             'INSERT INTO categories (user_id, name, category_type, icon, color) VALUES (?, ?, ?, ?, ?)',
             (user_id, name, cat_type, icon, color)
         )
+    db.commit()
+
+
+def seed_demo_account():
+    """Create a demo account with sample data if DEMO_MODE is enabled."""
+    if not app.config['DEMO_MODE']:
+        return
+    db = get_db()
+    existing = db.execute('SELECT id FROM users WHERE username = ?', ('demo',)).fetchone()
+    if existing:
+        return
+    password_hash = hash_password('demo')
+    cursor = db.execute(
+        'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+        ('demo', 'demo@example.com', password_hash)
+    )
+    db.commit()
+    user_id = cursor.lastrowid
+    create_default_categories(user_id)
+
+    # Create accounts
+    db.execute(
+        'INSERT INTO accounts (user_id, name, account_type, balance, currency) VALUES (?, ?, ?, ?, ?)',
+        (user_id, 'Checking Account', 'checking', 4250.00, 'USD')
+    )
+    db.execute(
+        'INSERT INTO accounts (user_id, name, account_type, balance, currency) VALUES (?, ?, ?, ?, ?)',
+        (user_id, 'Savings Account', 'savings', 12800.00, 'USD')
+    )
+    db.commit()
+
+    checking = db.execute('SELECT id FROM accounts WHERE user_id = ? AND name = ?', (user_id, 'Checking Account')).fetchone()['id']
+    savings = db.execute('SELECT id FROM accounts WHERE user_id = ? AND name = ?', (user_id, 'Savings Account')).fetchone()['id']
+
+    # Get category IDs
+    cats = {}
+    for row in db.execute('SELECT id, name FROM categories WHERE user_id = ?', (user_id,)).fetchall():
+        cats[row['name']] = row['id']
+
+    # Sample transactions for the last 2 months
+    sample_transactions = [
+        (checking, cats['Salary'], 'income', 3500.00, 'Monthly salary', 'Employer Inc.', '2026-03-01'),
+        (checking, cats['Salary'], 'income', 3500.00, 'Monthly salary', 'Employer Inc.', '2026-02-01'),
+        (checking, cats['Groceries'], 'expense', 85.40, 'Weekly groceries', 'Whole Foods', '2026-03-22'),
+        (checking, cats['Groceries'], 'expense', 62.15, 'Groceries', 'Trader Joe\'s', '2026-03-15'),
+        (checking, cats['Groceries'], 'expense', 94.30, 'Weekly groceries', 'Whole Foods', '2026-03-08'),
+        (checking, cats['Groceries'], 'expense', 71.20, 'Groceries', 'Trader Joe\'s', '2026-02-22'),
+        (checking, cats['Groceries'], 'expense', 88.50, 'Weekly groceries', 'Whole Foods', '2026-02-15'),
+        (checking, cats['Utilities'], 'expense', 145.00, 'Electric bill', 'Power Co.', '2026-03-10'),
+        (checking, cats['Utilities'], 'expense', 65.00, 'Internet', 'Comcast', '2026-03-05'),
+        (checking, cats['Utilities'], 'expense', 138.00, 'Electric bill', 'Power Co.', '2026-02-10'),
+        (checking, cats['Transportation'], 'expense', 55.00, 'Gas', 'Shell Station', '2026-03-18'),
+        (checking, cats['Transportation'], 'expense', 48.50, 'Gas', 'BP Station', '2026-02-25'),
+        (checking, cats['Entertainment'], 'expense', 15.99, 'Netflix subscription', 'Netflix', '2026-03-01'),
+        (checking, cats['Entertainment'], 'expense', 12.99, 'Spotify subscription', 'Spotify', '2026-03-01'),
+        (checking, cats['Dining Out'], 'expense', 42.80, 'Dinner', 'Italian Bistro', '2026-03-20'),
+        (checking, cats['Dining Out'], 'expense', 28.50, 'Lunch', 'Chipotle', '2026-03-12'),
+        (checking, cats['Dining Out'], 'expense', 35.00, 'Dinner', 'Sushi Place', '2026-02-18'),
+        (checking, cats['Shopping'], 'expense', 129.99, 'New headphones', 'Amazon', '2026-03-14'),
+        (checking, cats['Healthcare'], 'expense', 30.00, 'Copay', 'City Medical', '2026-03-06'),
+        (checking, cats['Housing'], 'expense', 1200.00, 'Monthly rent', 'Landlord', '2026-03-01'),
+        (checking, cats['Housing'], 'expense', 1200.00, 'Monthly rent', 'Landlord', '2026-02-01'),
+        (checking, cats['Transfer'], 'transfer', 500.00, 'Savings transfer', 'Self', '2026-03-02'),
+    ]
+    for acct, cat, ttype, amount, desc, payee, date in sample_transactions:
+        db.execute(
+            'INSERT INTO transactions (user_id, account_id, category_id, transaction_type, amount, description, payee, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (user_id, acct, cat, ttype, amount, desc, payee, date)
+        )
+
+    # Add a couple of budgets
+    db.execute('INSERT INTO budgets (user_id, category_id, amount, period, start_date) VALUES (?, ?, ?, ?, ?)',
+               (user_id, cats['Groceries'], 400.00, 'monthly', '2026-03-01'))
+    db.execute('INSERT INTO budgets (user_id, category_id, amount, period, start_date) VALUES (?, ?, ?, ?, ?)',
+               (user_id, cats['Dining Out'], 150.00, 'monthly', '2026-03-01'))
+    db.execute('INSERT INTO budgets (user_id, category_id, amount, period, start_date) VALUES (?, ?, ?, ?, ?)',
+               (user_id, cats['Entertainment'], 50.00, 'monthly', '2026-03-01'))
     db.commit()
 
 
@@ -1611,10 +1689,12 @@ def api_category_spending():
 def before_request():
     if not hasattr(app, '_db_initialized'):
         init_db()
+        seed_demo_account()
         app._db_initialized = True
 
 
 if __name__ == '__main__':
     with app.app_context():
         init_db()
+        seed_demo_account()
     app.run(debug=True, port=8000)

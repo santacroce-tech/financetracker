@@ -35,6 +35,12 @@
                     </button>
                 </form>
 
+                {% if config.DEMO_MODE %}
+                <div class="alert alert-info py-2 px-3 mb-3">
+                    <small><strong>Demo account:</strong> <code>demo</code> / <code>demo</code></small>
+                </div>
+                {% endif %}
+
                 <hr>
 
                 {% if config.REGISTRATION_ENABLED %}
