@@ -222,14 +222,37 @@ python provision.py provision-all
 | **Cloud Pro** | €9/month | Own subdomain, backups, SSL, EU data |
 | **Cloud Family** | €19/month | Pro + 5 users, custom domain |
 
+## Desktop App (Tauri)
+
+FinanceTracker also ships as a **native desktop application** for Windows, macOS, and Linux. The desktop version:
+
+- Works **100% offline** — no server or internet needed
+- Uses a local SQLite file you choose (no login/password)
+- Supports **English**, **Portuguese (BR)**, and **Spanish**
+- Includes a **bundled demo database** so you can try it instantly
+
+See [`desktop/README.md`](desktop/README.md) for build instructions.
+
+## Server Installation
+
+For detailed server deployment instructions (Docker, VPS, SaaS mode), see [`INSTALL.md`](INSTALL.md).
+
 ## Tech Stack
 
+### Web Version
 - **Backend**: Python 3.9+, Flask 3.0+
 - **Database**: SQLite
 - **Frontend**: Bootstrap 5, Chart.js
 - **Payments**: Stripe (with SEPA support)
 - **Email**: SendGrid / Mailgun / Postmark
 - **Deployment**: Docker, Traefik
+
+### Desktop Version
+- **Shell**: Tauri v2 (Rust)
+- **Backend**: Rust + rusqlite (bundled SQLite)
+- **Frontend**: React 18, Vite, Bootstrap 5, Chart.js
+- **i18n**: react-i18next (EN, PT-BR, ES)
+- **Platforms**: Windows (.msi), macOS (.dmg), Linux (.AppImage, .deb)
 
 ## Contributing
 

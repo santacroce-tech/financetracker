@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schemas.tauri.app/v2/schema/config.json",
+  "productName": "FinanceTracker",
+  "version": "0.1.0",
+  "identifier": "app.financetracker.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "FinanceTracker",
+        "width": 1280,
+        "height": 800,
+        "resizable": true,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "resources": [
+      "resources/demo.db"
+    ],
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "android": {
+      "minSdkVersion": 24
+    },
+    "iOS": {
+      "minimumSystemVersion": "16.0"
+    }
+  }
+}

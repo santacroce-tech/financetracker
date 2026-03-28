@@ -158,6 +158,74 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.15);
         }
 
+        .hero-window {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+
+        .hero-window .window-bar {
+            background: #2d2d44;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-window .window-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+        }
+
+        .hero-window .carousel-item img {
+            display: block; width: 100%;
+        }
+
+        .hero-window .carousel-indicators {
+            display: none;
+        }
+
+        .hero-page-label {
+            position: absolute; bottom: 12px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            color: #fff; font-size: 0.75rem;
+            padding: 4px 14px; border-radius: 20px;
+            pointer-events: none; z-index: 2;
+            backdrop-filter: blur(4px);
+        }
+
+        .hero-nav-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+
+        .hero-nav-btn {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .hero-nav-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        .hero-nav-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
         .faq {
             padding: 80px 0;
             background: var(--light-bg);
@@ -216,6 +284,9 @@
                         <a class="nav-link" href="#features">Features</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#desktop">Desktop App</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#pricing">Pricing</a>
                     </li>
                     <li class="nav-item">
@@ -241,16 +312,72 @@
                 <div class="col-lg-6">
                     <span class="badge bg-success mb-3 px-3 py-2"><i class="bi bi-unlock"></i> 100% Open Source &middot; MIT License</span>
                     <h1>Take Control of Your Finances</h1>
-                    <p>A free, open-source personal finance tracker. Import bank statements, auto-categorize transactions, and visualize your spending. Self-host it or use our cloud. Built with Python, Flask, and SQLite.</p>
-                    <a href="https://github.com/rsantacroce/financetracker" class="btn btn-light btn-hero me-3" target="_blank">
-                        <i class="bi bi-github"></i> View on GitHub
-                    </a>
-                    <a href="#pricing" class="btn btn-outline-light btn-hero">
-                        <i class="bi bi-rocket"></i> Get Started
-                    </a>
+                    <p>A free, open-source personal finance tracker. Import bank statements, auto-categorize transactions, and visualize your spending. Self-host it, use our cloud, or download the native desktop app. Available in English, Portuguese, and Spanish.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="#desktop" class="btn btn-light btn-hero">
+                            <i class="bi bi-download"></i> Download Desktop App
+                        </a>
+                        <a href="https://github.com/rsantacroce/financetracker" class="btn btn-outline-light btn-hero" target="_blank">
+                            <i class="bi bi-github"></i> View on GitHub
+                        </a>
+                        <a href="#pricing" class="btn btn-outline-light btn-hero">
+                            <i class="bi bi-cloud"></i> Self-Host
+                        </a>
+                    </div>
                 </div>
                 <div class="col-lg-6 mt-5 mt-lg-0">
-                    <img src="https://placehold.co/600x400/3498db/ffffff?text=Dashboard+Preview" alt="Dashboard Preview" class="img-fluid demo-img">
+                    <div class="hero-window">
+                        <div class="window-bar">
+                            <span class="window-dot" style="background:#ff5f57"></span>
+                            <span class="window-dot" style="background:#febc2e"></span>
+                            <span class="window-dot" style="background:#28c840"></span>
+                            <span style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-left:6px;">FinanceTracker Desktop</span>
+                        </div>
+                        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3500">
+                            <div class="carousel-indicators">
+                                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+                                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+                                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+                                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="3"></button>
+                                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="4"></button>
+                                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="5"></button>
+                            </div>
+                            <div class="carousel-inner">
+                                <div class="carousel-item active">
+                                    <img src="img/screenshot-dashboard.png" alt="Dashboard">
+                                    <span class="hero-page-label">Dashboard</span>
+                                </div>
+                                <div class="carousel-item">
+                                    <img src="img/screenshot-accounts.png" alt="Accounts">
+                                    <span class="hero-page-label">Accounts</span>
+                                </div>
+                                <div class="carousel-item">
+                                    <img src="img/screenshot-reports.png" alt="Reports">
+                                    <span class="hero-page-label">Reports &amp; Charts</span>
+                                </div>
+                                <div class="carousel-item">
+                                    <img src="img/screenshot-budgets.png" alt="Budgets">
+                                    <span class="hero-page-label">Budget Tracking</span>
+                                </div>
+                                <div class="carousel-item">
+                                    <img src="img/screenshot-clear.png" alt="Quick Categorization">
+                                    <span class="hero-page-label">Quick Categorization</span>
+                                </div>
+                                <div class="carousel-item">
+                                    <img src="img/screenshot-import.png" alt="CSV Import">
+                                    <span class="hero-page-label">CSV Import</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hero-nav-buttons">
+                            <button class="hero-nav-btn active" data-slide="0"><i class="bi bi-grid"></i> Dashboard</button>
+                            <button class="hero-nav-btn" data-slide="1"><i class="bi bi-wallet2"></i> Accounts</button>
+                            <button class="hero-nav-btn" data-slide="2"><i class="bi bi-bar-chart"></i> Reports</button>
+                            <button class="hero-nav-btn" data-slide="3"><i class="bi bi-speedometer2"></i> Budgets</button>
+                            <button class="hero-nav-btn" data-slide="4"><i class="bi bi-tags"></i> Categorize</button>
+                            <button class="hero-nav-btn" data-slide="5"><i class="bi bi-upload"></i> Import</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -260,25 +387,37 @@
     <section class="trust-badges">
         <div class="container">
             <div class="row">
-                <div class="col-md-3 col-6">
+                <div class="col-lg-2 col-md-4 col-6 mb-3">
                     <div class="trust-badge">
                         <i class="bi bi-shield-check"></i>
                         <p class="mb-0"><strong>GDPR Compliant</strong></p>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
+                <div class="col-lg-2 col-md-4 col-6 mb-3">
                     <div class="trust-badge">
                         <i class="bi bi-lock"></i>
                         <p class="mb-0"><strong>Bank-Level Security</strong></p>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
+                <div class="col-lg-2 col-md-4 col-6 mb-3">
                     <div class="trust-badge">
-                        <i class="bi bi-cloud-check"></i>
-                        <p class="mb-0"><strong>EU Data Centers</strong></p>
+                        <i class="bi bi-wifi-off"></i>
+                        <p class="mb-0"><strong>Works Offline</strong></p>
                     </div>
                 </div>
-                <div class="col-md-3 col-6">
+                <div class="col-lg-2 col-md-4 col-6 mb-3">
+                    <div class="trust-badge">
+                        <i class="bi bi-translate"></i>
+                        <p class="mb-0"><strong>3 Languages</strong></p>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6 mb-3">
+                    <div class="trust-badge">
+                        <i class="bi bi-display"></i>
+                        <p class="mb-0"><strong>All Platforms</strong></p>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6 mb-3">
                     <div class="trust-badge">
                         <i class="bi bi-code-slash"></i>
                         <p class="mb-0"><strong>Open Source</strong></p>
@@ -335,19 +474,87 @@
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="bi bi-phone"></i>
+                            <i class="bi bi-display"></i>
                         </div>
-                        <h3>Mobile Friendly</h3>
-                        <p class="text-muted">Responsive design works perfectly on desktop, tablet, and mobile devices.</p>
+                        <h3>Native Desktop App</h3>
+                        <p class="text-muted">Built with Tauri &amp; Rust. Runs natively on macOS, Windows, and Linux. Works completely offline.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="bi bi-shield-lock"></i>
+                            <i class="bi bi-translate"></i>
                         </div>
-                        <h3>Privacy First</h3>
-                        <p class="text-muted">Your data stays yours. Self-host or use our secure EU-based cloud.</p>
+                        <h3>Multi-Language</h3>
+                        <p class="text-muted">Available in English, Portuguese (Brazil), and Spanish. More languages coming soon.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Desktop App Section -->
+    <section class="py-5" id="desktop" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white;">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <span class="badge bg-primary mb-3 px-3 py-2"><i class="bi bi-stars"></i> New &mdash; Desktop App</span>
+                    <h2 class="fw-bold mb-3">Offline. Private. Native.</h2>
+                    <p class="opacity-75 mb-4">Download the FinanceTracker desktop app and take full control of your finances without an internet connection. Your data lives in a local SQLite file on your machine &mdash; no server, no account, no cloud.</p>
+
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-lightning-charge text-warning fs-4 me-3 mt-1"></i>
+                            <div>
+                                <strong>Built with Rust &amp; Tauri</strong>
+                                <p class="opacity-50 mb-0">Blazing fast, tiny footprint. Native performance on every platform.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-database text-info fs-4 me-3 mt-1"></i>
+                            <div>
+                                <strong>Pick Any SQLite File</strong>
+                                <p class="opacity-50 mb-0">No accounts or passwords. Just open a .db file and go. Create multiple databases for different purposes.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-translate text-success fs-4 me-3 mt-1"></i>
+                            <div>
+                                <strong>English, Portuguese &amp; Spanish</strong>
+                                <p class="opacity-50 mb-0">Full i18n support. Switch languages instantly from the sidebar.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-gift text-danger fs-4 me-3 mt-1"></i>
+                            <div>
+                                <strong>Includes Demo Database</strong>
+                                <p class="opacity-50 mb-0">Try it instantly with sample data. Accounts, transactions, categories, and budgets pre-loaded.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-uppercase opacity-50 mb-3" style="letter-spacing: 2px; font-size: 0.75rem;">Download for your platform</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="https://github.com/rsantacroce/financetracker/releases/latest" class="btn btn-outline-light" target="_blank">
+                            <i class="bi bi-apple"></i> macOS
+                        </a>
+                        <a href="https://github.com/rsantacroce/financetracker/releases/latest" class="btn btn-outline-light" target="_blank">
+                            <i class="bi bi-windows"></i> Windows
+                        </a>
+                        <a href="https://github.com/rsantacroce/financetracker/releases/latest" class="btn btn-outline-light" target="_blank">
+                            <i class="bi bi-ubuntu"></i> Linux
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="shadow-lg" style="border-radius: 16px; overflow: hidden;">
+                        <div class="d-flex align-items-center gap-2 px-3 py-2" style="background: #2d2d44;">
+                            <span style="width:12px;height:12px;border-radius:50%;background:#ff5f57;"></span>
+                            <span style="width:12px;height:12px;border-radius:50%;background:#febc2e;"></span>
+                            <span style="width:12px;height:12px;border-radius:50%;background:#28c840;"></span>
+                            <span class="text-white-50 ms-2" style="font-size:0.75rem;">FinanceTracker Desktop</span>
+                        </div>
+                        <img src="img/dashboard-screenshot.png" alt="FinanceTracker Desktop Dashboard" class="w-100" style="display:block;" />
                     </div>
                 </div>
             </div>
@@ -407,22 +614,41 @@
                 <p class="text-muted">Choose the plan that works for you</p>
             </div>
             <div class="row justify-content-center">
-                <div class="col-lg-5 col-md-8 mb-4">
+                <div class="col-lg-5 col-md-6 mb-4">
                     <div class="pricing-card text-center">
-                        <h3>Self-Hosted</h3>
-                        <p class="text-muted">For everyone. No strings attached.</p>
+                        <h3>Self-Hosted (Web)</h3>
+                        <p class="text-muted">Run on your own server with Docker</p>
                         <div class="price">Free <span>forever</span></div>
                         <ul class="text-start">
                             <li><i class="bi bi-check-circle-fill"></i> Full source code access</li>
-                            <li><i class="bi bi-check-circle-fill"></i> All features included</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Host on your own server</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Complete data ownership</li>
-                            <li><i class="bi bi-check-circle-fill"></i> Community support</li>
+                            <li><i class="bi bi-check-circle-fill"></i> All web features included</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Multi-user with accounts</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Email receipt parsing</li>
                             <li><i class="bi bi-check-circle-fill"></i> Docker ready</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Community support</li>
                             <li><i class="bi bi-check-circle-fill"></i> MIT License</li>
                         </ul>
                         <a href="https://github.com/rsantacroce/financetracker" class="btn btn-primary w-100" target="_blank">
                             <i class="bi bi-github"></i> Get on GitHub
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-5 col-md-6 mb-4">
+                    <div class="pricing-card featured text-center">
+                        <h3>Desktop App</h3>
+                        <p class="text-muted">Native app for macOS, Windows &amp; Linux</p>
+                        <div class="price">Free <span>forever</span></div>
+                        <ul class="text-start">
+                            <li><i class="bi bi-check-circle-fill"></i> Works 100% offline</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Native Rust + Tauri performance</li>
+                            <li><i class="bi bi-check-circle-fill"></i> No account required</li>
+                            <li><i class="bi bi-check-circle-fill"></i> English, Portuguese &amp; Spanish</li>
+                            <li><i class="bi bi-check-circle-fill"></i> Demo database included</li>
+                            <li><i class="bi bi-check-circle-fill"></i> macOS, Windows &amp; Linux</li>
+                            <li><i class="bi bi-check-circle-fill"></i> MIT License</li>
+                        </ul>
+                        <a href="https://github.com/rsantacroce/financetracker/releases/latest" class="btn btn-primary w-100" target="_blank">
+                            <i class="bi bi-download"></i> Download Desktop App
                         </a>
                     </div>
                 </div>
@@ -478,10 +704,22 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                    How do I contribute?
+                                    What's the difference between the web and desktop versions?
                                 </button>
                             </h2>
                             <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    The <strong>web version</strong> runs on a server (self-hosted or cloud) with multi-user support, email receipt parsing, and browser-based access. The <strong>desktop app</strong> is a native application built with Rust and Tauri that works completely offline &mdash; your data stays in a local SQLite file on your machine. No server, no account, no internet required. The desktop app also supports multiple languages (English, Portuguese, Spanish).
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                    How do I contribute?
+                                </button>
+                            </h2>
+                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
                                     Fork the repository on GitHub, create a feature branch, and submit a pull request. Bug reports and feature suggestions are also welcome via GitHub Issues.
                                 </div>
@@ -497,10 +735,15 @@
     <section class="py-5 bg-primary text-white text-center">
         <div class="container">
             <h2 class="fw-bold mb-3">Ready to Take Control?</h2>
-            <p class="mb-4">Start tracking your finances today. 100% free, open source, and self-hosted.</p>
-            <a href="https://github.com/rsantacroce/financetracker" class="btn btn-light btn-lg" target="_blank">
-                <i class="bi bi-github"></i> Get Started on GitHub
-            </a>
+            <p class="mb-4">Start tracking your finances today. 100% free, open source. Self-host it or download the desktop app.</p>
+            <div class="d-flex justify-content-center flex-wrap gap-3">
+                <a href="https://github.com/rsantacroce/financetracker/releases/latest" class="btn btn-light btn-lg" target="_blank">
+                    <i class="bi bi-download"></i> Download Desktop App
+                </a>
+                <a href="https://github.com/rsantacroce/financetracker" class="btn btn-outline-light btn-lg" target="_blank">
+                    <i class="bi bi-github"></i> Self-Host from GitHub
+                </a>
+            </div>
         </div>
     </section>
 
@@ -516,6 +759,7 @@
                     <h6>Product</h6>
                     <ul class="list-unstyled">
                         <li><a href="#features">Features</a></li>
+                        <li><a href="#desktop">Desktop App</a></li>
                         <li><a href="#pricing">Pricing</a></li>
                         <li><a href="#faq">FAQ</a></li>
                     </ul>
@@ -553,17 +797,44 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@beyonk/gdpr-cookie-consent-banner@16/dist/index.js"></script>
-    <cookie-consent-banner
-        cookie-name="financetracker_gdpr"
-        heading="Cookie Settings"
-        description="We use cookies to enhance your experience. You can choose which cookies you'd like to allow."
-        accept-all-label="Accept All"
-        reject-label="Reject All"
-        settings-label="Settings"
-        close-label="Close"
-        can-reject-cookies="true"
-        show-edit-icon="true"
-    ></cookie-consent-banner>
+    <script>
+    (function(){
+      var carousel = document.getElementById('heroCarousel');
+      var btns = document.querySelectorAll('.hero-nav-btn');
+      if (!carousel || !btns.length) return;
+      var bsCarousel = bootstrap.Carousel.getOrCreateInstance(carousel);
+      btns.forEach(function(btn){
+        btn.addEventListener('click', function(){
+          bsCarousel.to(parseInt(btn.dataset.slide));
+        });
+      });
+      carousel.addEventListener('slide.bs.carousel', function(e){
+        btns.forEach(function(b){ b.classList.remove('active'); });
+        btns[e.to].classList.add('active');
+      });
+    })();
+    </script>
+    <!-- GDPR Cookie Consent Banner -->
+    <style>
+    .cookie-banner{position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:#e2e8f0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;font-size:14px;box-shadow:0 -2px 10px rgba(0,0,0,.3);flex-wrap:wrap}
+    .cookie-banner a{color:#3498db;text-decoration:underline}
+    .cookie-banner-buttons{display:flex;gap:8px;flex-shrink:0}
+    .cookie-banner button{border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500}
+    .cookie-btn-accept{background:#3498db;color:#fff}
+    .cookie-btn-accept:hover{background:#2980b9}
+    .cookie-btn-reject{background:transparent;color:#94a3b8;border:1px solid #334155!important}
+    .cookie-btn-reject:hover{background:#334155}
+    </style>
+    <div class="cookie-banner" id="cookieBanner" style="display:none">
+      <span>We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies. <a href="https://financetracker.pro/privacy.html">Privacy Policy</a></span>
+      <div class="cookie-banner-buttons">
+        <button class="cookie-btn-reject" onclick="handleCookies(false)">Reject</button>
+        <button class="cookie-btn-accept" onclick="handleCookies(true)">Accept</button>
+      </div>
+    </div>
+    <script>
+    function handleCookies(accepted){document.getElementById("cookieBanner").style.display="none";var d=new Date;d.setFullYear(d.getFullYear()+1);document.cookie="gdpr_consent="+(accepted?"accepted":"rejected")+";expires="+d.toUTCString()+";path=/;SameSite=Lax"}
+    (function(){if(!document.cookie.match(/gdpr_consent=/)){document.getElementById("cookieBanner").style.display="flex"}})();
+    </script>
 </body>
 </html>

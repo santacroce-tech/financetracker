@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.tauri.app/v2/schema/capabilities/capability.json",
+  "identifier": "default",
+  "description": "FinanceTracker default capabilities",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "store:default",
+    "store:allow-get",
+    "store:allow-set",
+    "store:allow-save",
+    "store:allow-load"
+  ]
+}
