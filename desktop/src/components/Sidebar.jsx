@@ -31,10 +31,11 @@ export default function Sidebar() {
       className="d-flex flex-column p-3"
       style={{
         width: 220,
-        minHeight: "100vh",
+        height: "100vh",
         backgroundColor: "#1a1a2e",
         color: "#fff",
         flexShrink: 0,
+        overflowY: "auto",
       }}
     >
       <div className="mb-4 px-1">
