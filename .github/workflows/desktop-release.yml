@@ -111,11 +111,15 @@ jobs:
             echo "Version $conf_version matches tag $GITHUB_REF_NAME."
           fi
 
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+      # Signing config is optional, but it CANNOT simply be handed to the build
+      # step as `FOO: ${{ secrets.FOO }}`. An absent secret still produces a
+      # set-but-empty variable, and tauri-bundler reads these with env::var_os,
+      # which returns Some("") for that — so it concludes a certificate was
+      # supplied and then dies in `security import`. Exporting only the
+      # non-empty values keeps unsigned builds genuinely unsigned.
+      - name: Export signing secrets that are actually set
+        shell: bash
         env:
-          # All optional. tauri-action skips signing/notarization entirely
-          # when these are unset, so the workflow works on a bare repo.
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -124,6 +128,30 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          exported=0
+          for name in \
+            APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY \
+            APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID \
+            TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+          do
+            value="${!name}"
+            [ -n "$value" ] || continue
+            {
+              echo "${name}<<__GHA_SECRET_EOF__"
+              echo "$value"
+              echo "__GHA_SECRET_EOF__"
+            } >> "$GITHUB_ENV"
+            exported=$((exported + 1))
+          done
+          if [ "$exported" -eq 0 ]; then
+            echo "No signing secrets configured — building unsigned."
+          else
+            echo "Exported $exported signing variable(s)."
+          fi
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         with:
           projectPath: desktop
           args: --target ${{ matrix.target }}
