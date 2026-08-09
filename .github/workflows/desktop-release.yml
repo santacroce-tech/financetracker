@@ -156,6 +156,26 @@ jobs:
           projectPath: desktop
           args: --target ${{ matrix.target }}
 
+      # Both macOS targets emit an updater bundle named exactly
+      # FinanceTracker.app.tar.gz. Release assets share one namespace, so the
+      # second upload would collide with the first. The .dmg/.msi/.deb names
+      # already carry their arch; only these do not.
+      - name: Disambiguate macOS updater bundles
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          dir="desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          [ -d "$dir" ] || { echo "No macos bundle dir; nothing to rename."; exit 0; }
+          arch="${{ matrix.target }}"
+          arch="${arch%%-*}"
+          for f in "$dir"/*.app.tar.gz; do
+            [ -e "$f" ] || continue
+            case "$(basename "$f")" in *"_${arch}."*) continue ;; esac
+            mv -v "$f" "${f%.app.tar.gz}_${arch}.app.tar.gz"
+            [ -e "${f}.sig" ] && mv -v "${f}.sig" "${f%.app.tar.gz}_${arch}.app.tar.gz.sig"
+          done
+          ls -1 "$dir"
+
       - name: Upload installers
         uses: actions/upload-artifact@v4
         with:
