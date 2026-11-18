@@ -3,12 +3,51 @@ import { useTranslation } from "react-i18next";
 import { importCsv, getAccounts } from "../api/tauri";
 import Alert from "../components/Alert";
 
+const SEPARATORS = [",", ";", "\t", "|"];
+const SEPARATOR_LABELS = {
+  ",": "import.sepComma",
+  ";": "import.sepSemicolon",
+  "\t": "import.sepTab",
+  "|": "import.sepPipe",
+};
+
+// Pick the candidate separator that appears most often in the first line.
+function detectSeparator(text) {
+  const firstLine = text.split("\n").find((l) => l.trim()) || "";
+  let best = ",";
+  let bestCount = 0;
+  for (const sep of SEPARATORS) {
+    const count = firstLine.split(sep).length - 1;
+    if (count > bestCount) { best = sep; bestCount = count; }
+  }
+  return best;
+}
+
+// Split one CSV line on the separator, respecting double-quoted fields.
+function splitLine(line, sep) {
+  const cells = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === sep && !inQuotes) {
+      cells.push(cur); cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  cells.push(cur);
+  return cells.map((c) => c.replace(/\r$/, ""));
+}
+
 export default function Import() {
   const { t } = useTranslation();
   const [accounts, setAccounts] = useState([]);
   const [csvText, setCsvText] = useState("");
-  const [preview, setPreview] = useState([]);
-  const [headers, setHeaders] = useState([]);
+  const [separator, setSeparator] = useState("auto");
   const [mapping, setMapping] = useState({ date: 0, amount: 1, description: 2, payee: 3 });
   const [accountId, setAccountId] = useState("");
   const [transactionType, setTransactionType] = useState("auto");
@@ -27,16 +66,18 @@ export default function Import() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const text = ev.target.result;
-      setCsvText(text);
-      const lines = text.split("\n").filter((l) => l.trim());
-      if (lines.length === 0) return;
-      const firstLine = lines[0].split(",");
-      setHeaders(firstLine);
-      setPreview(lines.slice(0, 6).map((l) => l.split(",")));
+      setCsvText(ev.target.result);
     };
     reader.readAsText(file);
   };
+
+  const effectiveSeparator = separator === "auto" ? detectSeparator(csvText) : separator;
+  const preview = csvText
+    .split("\n")
+    .filter((l) => l.trim())
+    .slice(0, 6)
+    .map((l) => splitLine(l, effectiveSeparator));
+  const headers = preview[0] || [];
 
   const handleImport = async () => {
     if (!csvText || !accountId) {
@@ -57,6 +98,7 @@ export default function Import() {
         transactionType,
         dateFormat,
         hasHeader,
+        delimiter: effectiveSeparator,
       });
       setResult(res);
       setAlert({ type: "success", msg: t("import.importedCount", { count: res.imported }) });
@@ -81,6 +123,21 @@ export default function Import() {
             <input className="form-check-input" type="checkbox" id="hasHeader" checked={hasHeader}
               onChange={(e) => setHasHeader(e.target.checked)} />
             <label className="form-check-label" htmlFor="hasHeader">{t("import.firstRowHeader")}</label>
+          </div>
+          <div className="mt-3" style={{ maxWidth: 260 }}>
+            <label className="form-label" htmlFor="separator">{t("import.separator")}</label>
+            <select className="form-select" id="separator" value={separator}
+              onChange={(e) => setSeparator(e.target.value)}>
+              <option value="auto">
+                {csvText && separator === "auto"
+                  ? `${t("import.sepAuto")} (${t(SEPARATOR_LABELS[effectiveSeparator])})`
+                  : t("import.sepAuto")}
+              </option>
+              <option value=",">{t("import.sepComma")}</option>
+              <option value=";">{t("import.sepSemicolon")}</option>
+              <option value={"\t"}>{t("import.sepTab")}</option>
+              <option value="|">{t("import.sepPipe")}</option>
+            </select>
           </div>
         </div>
       </div>

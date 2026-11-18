@@ -267,12 +267,21 @@ pub fn import_csv(
     transaction_type: String,
     date_format: String,
     has_header: bool,
+    delimiter: Option<String>,
 ) -> Result<ImportResult, String> {
     let guard = state.db.lock().map_err(|e| e.to_string())?;
     let conn = guard.as_ref().ok_or("No database open")?;
 
+    let delimiter_byte = match delimiter.as_deref() {
+        None | Some("") => b',',
+        Some("\\t") | Some("tab") => b'\t',
+        Some(d) if d.len() == 1 => d.as_bytes()[0],
+        Some(d) => return Err(format!("Invalid separator: {:?} (must be a single character)", d)),
+    };
+
     let mut rdr = csv::ReaderBuilder::new()
         .has_headers(has_header)
+        .delimiter(delimiter_byte)
         .flexible(true)
         .from_reader(csv_content.as_bytes());
 
@@ -317,14 +326,9 @@ pub fn import_csv(
             }
         };
 
-        let amount: f64 = match amount_raw
-            .replace(',', ".")
-            .replace([' ', '\u{a0}'], "")
-            .trim_start_matches('+')
-            .parse()
-        {
-            Ok(v) => v,
-            Err(_) => {
+        let amount: f64 = match parse_amount(&amount_raw) {
+            Some(v) => v,
+            None => {
                 errors.push(format!("Row {}: invalid amount '{}'", i + 1, amount_raw));
                 skipped += 1;
                 continue;
@@ -373,6 +377,75 @@ pub fn import_csv(
     Ok(ImportResult { imported, skipped, errors })
 }
 
+/// Parse a bank-statement amount into a signed number.
+///
+/// Handles European and US formats: `-10,00`, `1.234,56`, `1,234.56`, `-45.50`,
+/// as well as currency symbols/codes (`€`, `EUR`, `$`), spaces used as
+/// thousands separators, the Unicode minus sign (`−`), a trailing minus
+/// (`10,00-`) and accounting parentheses (`(10,00)`).
+///
+/// When only one kind of separator appears: a single `,` or `.` is treated as
+/// the decimal mark; the same mark repeated (`1.234.567`) is treated as
+/// thousands grouping.
+fn parse_amount(raw: &str) -> Option<f64> {
+    let s = raw.trim();
+    if s.is_empty() {
+        return None;
+    }
+
+    let mut negative = false;
+    let mut body = String::new();
+    for ch in s.chars() {
+        match ch {
+            '-' | '\u{2212}' | '\u{2013}' => negative = true,
+            '(' | ')' => {
+                if ch == '(' {
+                    negative = true;
+                }
+            }
+            '0'..='9' | ',' | '.' => body.push(ch),
+            // Ignore '+', whitespace (incl. NBSP / thin space), apostrophe
+            // thousands separators, currency symbols and codes.
+            _ => {}
+        }
+    }
+
+    if !body.chars().any(|c| c.is_ascii_digit()) {
+        return None;
+    }
+
+    let last_comma = body.rfind(',');
+    let last_dot = body.rfind('.');
+    let normalized = match (last_comma, last_dot) {
+        (Some(c), Some(d)) => {
+            // Both present: whichever comes last is the decimal mark.
+            if c > d {
+                body.replace('.', "").replace(',', ".")
+            } else {
+                body.replace(',', "")
+            }
+        }
+        (Some(_), None) => {
+            if body.matches(',').count() > 1 {
+                body.replace(',', "")
+            } else {
+                body.replace(',', ".")
+            }
+        }
+        (None, Some(_)) => {
+            if body.matches('.').count() > 1 {
+                body.replace('.', "")
+            } else {
+                body
+            }
+        }
+        (None, None) => body,
+    };
+
+    let value: f64 = normalized.parse().ok()?;
+    Some(if negative { -value.abs() } else { value })
+}
+
 fn normalize_date(raw: &str, format: &str) -> Option<String> {
     let parts: Vec<&str> = raw.split(['-', '/', '.']).collect();
     if parts.len() != 3 {
@@ -414,4 +487,45 @@ fn fetch_transaction(conn: &rusqlite::Connection, id: i64) -> Result<Transaction
         },
     )
     .map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_amount;
+
+    #[test]
+    fn parses_european_and_us_amounts() {
+        let cases: &[(&str, f64)] = &[
+            ("-10,00", -10.0),
+            ("10,00", 10.0),
+            ("+10,00", 10.0),
+            ("-45,50", -45.5),
+            ("3.500,00", 3500.0),
+            ("-1.234,56", -1234.56),
+            ("1,234.56", 1234.56),
+            ("-45.50", -45.5),
+            ("1.234.567", 1234567.0),
+            ("1 234,56", 1234.56),
+            ("1\u{a0}234,56", 1234.56),
+            ("-10,00 €", -10.0),
+            ("€ -10,00", -10.0),
+            ("EUR -10,00", -10.0),
+            ("\u{2212}10,00", -10.0),
+            ("10,00-", -10.0),
+            ("(10,00)", -10.0),
+            ("0,99", 0.99),
+            ("42", 42.0),
+        ];
+        for (input, expected) in cases {
+            let got = parse_amount(input);
+            assert_eq!(got, Some(*expected), "input {:?}", input);
+        }
+    }
+
+    #[test]
+    fn rejects_non_numbers() {
+        for input in ["", "abc", "-", "€", ",."] {
+            assert_eq!(parse_amount(input), None, "input {:?}", input);
+        }
+    }
 }
