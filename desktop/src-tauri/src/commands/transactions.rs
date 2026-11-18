@@ -451,10 +451,17 @@ fn normalize_date(raw: &str, format: &str) -> Option<String> {
     if parts.len() != 3 {
         return None;
     }
+    // Zero-pad so dates compare and group correctly as text ("2026-1-8" would
+    // sort after "2026-10-01").
+    let ymd = |y: &str, m: &str, d: &str| -> Option<String> {
+        let (y, m, d) = (y.trim(), m.trim(), d.trim());
+        let (m, d): (u32, u32) = (m.parse().ok()?, d.parse().ok()?);
+        Some(format!("{}-{:02}-{:02}", y, m, d))
+    };
     match format {
-        "YYYY-MM-DD" => Some(raw.replace(['/', '.'], "-")),
-        "DD/MM/YYYY" => Some(format!("{}-{}-{}", parts[2], parts[1], parts[0])),
-        "MM/DD/YYYY" => Some(format!("{}-{}-{}", parts[2], parts[0], parts[1])),
+        "YYYY-MM-DD" => ymd(parts[0], parts[1], parts[2]),
+        "DD/MM/YYYY" => ymd(parts[2], parts[1], parts[0]),
+        "MM/DD/YYYY" => ymd(parts[2], parts[0], parts[1]),
         _ => Some(raw.to_string()),
     }
 }

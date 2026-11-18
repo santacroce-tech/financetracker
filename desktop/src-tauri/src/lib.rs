@@ -119,6 +119,14 @@ pub fn run() {
             commands::reports::get_category_spending,
             commands::reports::get_top_payees,
             commands::reports::get_recent_transactions,
+            // Summary
+            commands::summary::get_summary,
+            commands::summary::get_recurring,
+            commands::summary::set_recurring_status,
+            commands::summary::get_debts,
+            commands::summary::add_debt,
+            commands::summary::update_debt,
+            commands::summary::delete_debt,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

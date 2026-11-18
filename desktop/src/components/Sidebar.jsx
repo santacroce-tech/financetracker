@@ -15,6 +15,7 @@ export default function Sidebar() {
     { to: "/categories", icon: "tags", label: t("nav.categories") },
     { to: "/rules", icon: "funnel", label: t("nav.rules") },
     { to: "/budgets", icon: "pie-chart", label: t("nav.budgets") },
+    { to: "/summary", icon: "journal-text", label: t("nav.summary") },
     { to: "/reports", icon: "bar-chart-line", label: t("nav.reports") },
     { to: "/import", icon: "upload", label: t("nav.importCsv") },
   ];

@@ -46,7 +46,8 @@
     "budgets": "Presupuestos",
     "reports": "Informes",
     "importCsv": "Importar CSV",
-    "switchDatabase": "Cambiar Base de Datos"
+    "switchDatabase": "Cambiar Base de Datos",
+    "summary": "Resumen"
   },
   "welcome": {
     "title": "FinanceTracker",
@@ -92,6 +93,11 @@
       "cash": "Efectivo",
       "investment": "Inversi\u00f3n",
       "other": "Otro"
+    },
+    "owner": "Titular",
+    "owners": {
+      "personal": "Personal",
+      "company": "Empresa"
     }
   },
   "transactions": {
@@ -176,6 +182,97 @@
     "noDataPeriod": "No hay datos para este per\u00edodo.",
     "noExpenseData": "No hay datos de gastos.",
     "noPayeeData": "No hay datos de beneficiarios."
+  },
+  "summary": {
+    "title": "Resumen",
+    "tabs": {
+      "overview": "General",
+      "monthly": "Recurrentes mensuales",
+      "quarterly": "Recurrentes trimestrales",
+      "annual": "Anuales",
+      "debts": "Deudas y pr\u00e9stamos"
+    },
+    "presets": {
+      "thisYear": "Este a\u00f1o",
+      "lastYear": "A\u00f1o pasado",
+      "last12Months": "\u00daltimos 12 meses"
+    },
+    "accountsTitle": "Cuentas",
+    "account": "Cuenta",
+    "openingBalance": "Saldo inicial",
+    "moneyIn": "Entradas",
+    "moneyOut": "Salidas",
+    "netChange": "Variaci\u00f3n neta",
+    "closingBalance": "Saldo final",
+    "transactions": "Transacciones",
+    "total": "Total",
+    "mixedCurrencies": "Las cuentas usan monedas distintas, por lo que no se muestra un total. Las cifras mensuales y trimestrales se muestran en {{currency}}.",
+    "personalByMonth": "Personal \u2013 por mes",
+    "month": "Mes",
+    "covers": "Periodo",
+    "net": "Neto",
+    "byQuarter": "Por trimestre",
+    "quarter": "Trimestre",
+    "personalIn": "Entradas personales",
+    "personalOut": "Salidas personales",
+    "companyIn": "Entradas empresa",
+    "companyOut": "Salidas empresa",
+    "recurring": {
+      "help": "Detectados a partir de tu historial: mismo beneficiario, importe similar, a intervalos regulares. Confirma los reales y descarta el resto.",
+      "totalOut": {
+        "monthly": "Salidas recurrentes al mes",
+        "quarterly": "Salidas recurrentes al trimestre",
+        "annual": "Salidas recurrentes al a\u00f1o"
+      },
+      "totalIn": {
+        "monthly": "Entradas recurrentes al mes",
+        "quarterly": "Entradas recurrentes al trimestre",
+        "annual": "Entradas recurrentes al a\u00f1o"
+      },
+      "typicalAmount": "Importe habitual",
+      "occurrences": "Veces",
+      "last": "\u00daltimo",
+      "next": "Pr\u00f3ximo previsto",
+      "status": "Estado",
+      "statuses": {
+        "detected": "Por revisar",
+        "confirmed": "Confirmado",
+        "dismissed": "Descartado"
+      },
+      "confirm": "Confirmar",
+      "dismiss": "Descartar",
+      "undo": "Deshacer",
+      "showDismissed": "Mostrar descartados ({{count}})",
+      "none": "No se encontraron pagos recurrentes con esta frecuencia.",
+      "possiblyEnded": "posiblemente finalizado",
+      "possiblyEndedHint": "No se ha visto ning\u00fan pago en bastante m\u00e1s de un periodo.",
+      "pendingHint": "Elementos detectados pendientes de revisi\u00f3n"
+    },
+    "debts": {
+      "owedToMe": "Me deben",
+      "iOwe": "Debo",
+      "liabilities": "Cuentas de pasivo",
+      "netPosition": "Posici\u00f3n neta",
+      "ledger": "Registro",
+      "add": "A\u00f1adir entrada",
+      "showSettled": "Mostrar saldadas ({{count}})",
+      "direction": "Sentido",
+      "directions": {
+        "i_owe": "Debo",
+        "owed_to_me": "Me deben"
+      },
+      "counterparty": "Persona / empresa",
+      "dueDate": "Vencimiento",
+      "note": "Nota",
+      "overdue": "vencido",
+      "markSettled": "Marcar como saldada",
+      "reopen": "Reabrir",
+      "none": "No hay entradas abiertas.",
+      "deleteConfirm": "\u00bfEliminar esta entrada?",
+      "liabilityAccounts": "Cuentas de pasivo",
+      "liabilityHelp": "Cuentas de cr\u00e9dito y cualquier cuenta con saldo negativo.",
+      "noLiabilities": "No hay cuentas de pasivo."
+    }
   },
   "import": {
     "title": "Importar CSV",

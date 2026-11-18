@@ -9,10 +9,10 @@ export const openDemoDb = () => invoke("open_demo_db");
 
 // Accounts
 export const getAccounts = () => invoke("get_accounts");
-export const addAccount = (name, accountType, balance, currency) =>
-  invoke("add_account", { name, accountType, balance, currency });
-export const updateAccount = (id, name, accountType, balance, currency) =>
-  invoke("update_account", { id, name, accountType, balance, currency });
+export const addAccount = (name, accountType, balance, currency, owner) =>
+  invoke("add_account", { name, accountType, balance, currency, owner });
+export const updateAccount = (id, name, accountType, balance, currency, owner) =>
+  invoke("update_account", { id, name, accountType, balance, currency, owner });
 export const deleteAccount = (id) => invoke("delete_account", { id });
 
 // Transactions
@@ -53,3 +53,28 @@ export const getMonthlyData = (months) => invoke("get_monthly_data", { months })
 export const getCategorySpending = (period) => invoke("get_category_spending", { period });
 export const getTopPayees = (limit) => invoke("get_top_payees", { limit });
 export const getRecentTransactions = (limit) => invoke("get_recent_transactions", { limit });
+
+// Summary
+export const getSummary = (startDate, endDate) => invoke("get_summary", { startDate, endDate });
+export const getRecurring = () => invoke("get_recurring");
+export const setRecurringStatus = (item, status) =>
+  invoke("set_recurring_status", {
+    key: item.key,
+    name: item.name,
+    frequency: item.frequency,
+    transactionType: item.transaction_type,
+    amount: item.amount,
+    status,
+  });
+export const getDebts = () => invoke("get_debts");
+export const addDebt = (d) =>
+  invoke("add_debt", {
+    direction: d.direction, counterparty: d.counterparty, amount: d.amount,
+    currency: d.currency, dueDate: d.due_date || null, note: d.note || null,
+  });
+export const updateDebt = (d) =>
+  invoke("update_debt", {
+    id: d.id, direction: d.direction, counterparty: d.counterparty, amount: d.amount,
+    currency: d.currency, dueDate: d.due_date || null, note: d.note || null, settled: d.settled,
+  });
+export const deleteDebt = (id) => invoke("delete_debt", { id });

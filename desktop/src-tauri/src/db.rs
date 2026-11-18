@@ -61,7 +61,50 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         ",
     )?;
 
+    migrate(conn)?;
     seed_default_categories(conn)?;
+    Ok(())
+}
+
+/// Bring databases created by older versions up to the current schema.
+fn migrate(conn: &Connection) -> Result<()> {
+    let has_owner: bool = conn
+        .prepare("SELECT 1 FROM pragma_table_info('accounts') WHERE name = 'owner'")?
+        .exists([])?;
+    if !has_owner {
+        conn.execute_batch(
+            "ALTER TABLE accounts ADD COLUMN owner TEXT NOT NULL DEFAULT 'personal';",
+        )?;
+    }
+
+    conn.execute_batch(
+        "
+        -- Recurring payments the user confirmed or dismissed. Detected-but-
+        -- unreviewed ones are computed on the fly and not stored.
+        CREATE TABLE IF NOT EXISTS recurring_items (
+            key              TEXT PRIMARY KEY,
+            name             TEXT NOT NULL,
+            frequency        TEXT NOT NULL,
+            transaction_type TEXT NOT NULL,
+            amount           REAL NOT NULL,
+            status           TEXT NOT NULL,
+            created_at       TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        -- Manual IOU ledger. direction: 'owed_to_me' or 'i_owe'.
+        CREATE TABLE IF NOT EXISTS debts (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            direction    TEXT NOT NULL,
+            counterparty TEXT NOT NULL,
+            amount       REAL NOT NULL,
+            currency     TEXT NOT NULL DEFAULT 'EUR',
+            due_date     TEXT,
+            note         TEXT,
+            settled      INTEGER NOT NULL DEFAULT 0,
+            created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        ",
+    )?;
     Ok(())
 }
 

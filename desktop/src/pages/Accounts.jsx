@@ -9,7 +9,7 @@ const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CHF", "SEK", "NOK
 const fmt = (n, currency = "USD") =>
   new Intl.NumberFormat("en-US", { style: "currency", currency }).format(n);
 
-const empty = { name: "", account_type: "checking", balance: 0, currency: "USD" };
+const empty = { name: "", account_type: "checking", balance: 0, currency: "USD", owner: "personal" };
 
 export default function Accounts() {
   const { t } = useTranslation();
@@ -25,7 +25,7 @@ export default function Accounts() {
 
   const openAdd = () => { setForm(empty); setEditing(null); setShowForm(true); };
   const openEdit = (a) => {
-    setForm({ name: a.name, account_type: a.account_type, balance: a.balance, currency: a.currency });
+    setForm({ name: a.name, account_type: a.account_type, balance: a.balance, currency: a.currency, owner: a.owner || "personal" });
     setEditing(a.id);
     setShowForm(true);
   };
@@ -34,10 +34,10 @@ export default function Accounts() {
     e.preventDefault();
     try {
       if (editing) {
-        await updateAccount(editing, form.name, form.account_type, Number(form.balance), form.currency);
+        await updateAccount(editing, form.name, form.account_type, Number(form.balance), form.currency, form.owner);
         setAlert({ type: "success", msg: t("accounts.accountUpdated") });
       } else {
-        await addAccount(form.name, form.account_type, Number(form.balance), form.currency);
+        await addAccount(form.name, form.account_type, Number(form.balance), form.currency, form.owner);
         setAlert({ type: "success", msg: t("accounts.accountAdded") });
       }
       setShowForm(false);
@@ -76,12 +76,20 @@ export default function Accounts() {
             <h6 className="fw-semibold mb-3">{t(editing ? "accounts.editAccount" : "accounts.newAccount")}</h6>
             <form onSubmit={handleSubmit}>
               <div className="row g-3">
-                <div className="col-md-4">
+                <div className="col-md-3">
                   <label className="form-label">{t("common.name")}</label>
                   <input className="form-control" required value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </div>
-                <div className="col-md-3">
+                <div className="col-md-2">
+                  <label className="form-label">{t("accounts.owner")}</label>
+                  <select className="form-select" value={form.owner}
+                    onChange={(e) => setForm({ ...form, owner: e.target.value })}>
+                    <option value="personal">{t("accounts.owners.personal")}</option>
+                    <option value="company">{t("accounts.owners.company")}</option>
+                  </select>
+                </div>
+                <div className="col-md-2">
                   <label className="form-label">{t("common.type")}</label>
                   <select className="form-select" value={form.account_type}
                     onChange={(e) => setForm({ ...form, account_type: e.target.value })}>
@@ -127,6 +135,9 @@ export default function Accounts() {
                     <span className="fw-semibold">{a.name}</span>
                   </div>
                   <small className="text-muted text-capitalize">{a.account_type}</small>
+                  <span className={`badge ms-2 ${a.owner === "company" ? "bg-info-subtle text-info-emphasis" : "bg-secondary-subtle text-secondary-emphasis"}`}>
+                    {t(`accounts.owners.${a.owner || "personal"}`)}
+                  </span>
                   <div className="fs-5 fw-bold mt-1">{fmt(a.balance, a.currency)}</div>
                 </div>
                 <div className="d-flex gap-1">

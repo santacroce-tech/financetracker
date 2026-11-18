@@ -10,6 +10,7 @@ import Categories from "./pages/Categories";
 import Rules from "./pages/Rules";
 import Budgets from "./pages/Budgets";
 import Reports from "./pages/Reports";
+import Summary from "./pages/Summary";
 import Import from "./pages/Import";
 import Clear from "./pages/Clear";
 
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/categories" element={<Categories />} />
               <Route path="/rules" element={<Rules />} />
               <Route path="/budgets" element={<Budgets />} />
+              <Route path="/summary" element={<Summary />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/import" element={<Import />} />
               <Route path="/clear" element={<Clear />} />

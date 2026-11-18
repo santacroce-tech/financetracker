@@ -46,7 +46,8 @@
     "budgets": "Budgets",
     "reports": "Reports",
     "importCsv": "Import CSV",
-    "switchDatabase": "Switch Database"
+    "switchDatabase": "Switch Database",
+    "summary": "Summary"
   },
   "welcome": {
     "title": "FinanceTracker",
@@ -92,6 +93,11 @@
       "cash": "Cash",
       "investment": "Investment",
       "other": "Other"
+    },
+    "owner": "Owner",
+    "owners": {
+      "personal": "Personal",
+      "company": "Company"
     }
   },
   "transactions": {
@@ -176,6 +182,97 @@
     "noDataPeriod": "No data for this period.",
     "noExpenseData": "No expense data.",
     "noPayeeData": "No payee data."
+  },
+  "summary": {
+    "title": "Summary",
+    "tabs": {
+      "overview": "Overview",
+      "monthly": "Monthly Recurring",
+      "quarterly": "Quarterly Recurring",
+      "annual": "Annual",
+      "debts": "Owed & Debts"
+    },
+    "presets": {
+      "thisYear": "This year",
+      "lastYear": "Last year",
+      "last12Months": "Last 12 months"
+    },
+    "accountsTitle": "Accounts",
+    "account": "Account",
+    "openingBalance": "Opening balance",
+    "moneyIn": "Money in",
+    "moneyOut": "Money out",
+    "netChange": "Net change",
+    "closingBalance": "Closing balance",
+    "transactions": "Transactions",
+    "total": "Total",
+    "mixedCurrencies": "Accounts use different currencies, so no account total is shown. Monthly and quarterly figures are displayed in {{currency}}.",
+    "personalByMonth": "Personal \u2013 by month",
+    "month": "Month",
+    "covers": "Covers",
+    "net": "Net",
+    "byQuarter": "By quarter",
+    "quarter": "Quarter",
+    "personalIn": "Personal in",
+    "personalOut": "Personal out",
+    "companyIn": "Company in",
+    "companyOut": "Company out",
+    "recurring": {
+      "help": "Detected from your transaction history: same payee, similar amount, at a regular interval. Confirm the real ones and dismiss the rest.",
+      "totalOut": {
+        "monthly": "Recurring out per month",
+        "quarterly": "Recurring out per quarter",
+        "annual": "Recurring out per year"
+      },
+      "totalIn": {
+        "monthly": "Recurring in per month",
+        "quarterly": "Recurring in per quarter",
+        "annual": "Recurring in per year"
+      },
+      "typicalAmount": "Typical amount",
+      "occurrences": "Times",
+      "last": "Last",
+      "next": "Next expected",
+      "status": "Status",
+      "statuses": {
+        "detected": "To review",
+        "confirmed": "Confirmed",
+        "dismissed": "Dismissed"
+      },
+      "confirm": "Confirm",
+      "dismiss": "Dismiss",
+      "undo": "Undo",
+      "showDismissed": "Show dismissed ({{count}})",
+      "none": "No recurring payments found for this frequency.",
+      "possiblyEnded": "possibly ended",
+      "possiblyEndedHint": "No payment seen for well over one period.",
+      "pendingHint": "Detected items waiting for review"
+    },
+    "debts": {
+      "owedToMe": "Owed to me",
+      "iOwe": "I owe",
+      "liabilities": "Liability accounts",
+      "netPosition": "Net position",
+      "ledger": "Ledger",
+      "add": "Add entry",
+      "showSettled": "Show settled ({{count}})",
+      "direction": "Direction",
+      "directions": {
+        "i_owe": "I owe",
+        "owed_to_me": "Owed to me"
+      },
+      "counterparty": "Person / company",
+      "dueDate": "Due date",
+      "note": "Note",
+      "overdue": "overdue",
+      "markSettled": "Mark as settled",
+      "reopen": "Reopen",
+      "none": "No open entries.",
+      "deleteConfirm": "Delete this entry?",
+      "liabilityAccounts": "Liability accounts",
+      "liabilityHelp": "Credit accounts and any account with a negative balance.",
+      "noLiabilities": "No liability accounts."
+    }
   },
   "import": {
     "title": "Import CSV",
