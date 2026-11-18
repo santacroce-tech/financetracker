@@ -1,277 +1,48 @@
 # FinanceTracker
 
-A simple, powerful personal finance application similar to Quicken and Microsoft Money. Built with Python, Flask, and SQLite.
+A fast, fully offline personal finance desktop app for Windows, macOS and Linux — built with Tauri v2, React and Rust. No account, no server: your data lives in a local SQLite file you choose.
 
-![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
-![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## Features
 
-### Core Features
-- **Multi-Account Support** - Track checking, savings, credit cards, cash, and investments
-- **Transaction Management** - Add, edit, delete, and search transactions
-- **CSV Import** - Import bank statements with automatic format detection (US/European)
-- **Category Management** - Custom categories with icons and colors
-- **Reports & Charts** - Visual spending analysis, monthly trends, savings rate
+- **Multi-account support** — checking, savings, credit cards, cash, investments
+- **Transactions** — add, edit, delete and search
+- **CSV import** — map columns, pick the separator (comma, semicolon, tab, pipe, or auto-detect), choose the date format; European and US amounts are both understood (`-10,00`, `1.234,56`, `1,234.56`, `-10,00 €`, …)
+- **Categories, rules and budgets** — auto-categorize recurring payees and track spending against budgets
+- **Keyboard-driven clearing** — fly through uncategorized transactions with the keyboard
+- **Reports & charts** — spending analysis and monthly trends
+- **Languages** — English, Portuguese (Brazil), Spanish
+- **Demo database** bundled so you can try it instantly
 
-### Smart Categorization
-- **Auto-Categorization Rules** - Create patterns to automatically categorize transactions
-- **Keyboard-Driven Clearing** - Quickly categorize transactions using keyboard shortcuts
-- **Category Suggestions** - Smart suggestions based on merchant/payee
+## Getting Started
 
-### Email Inbox (Forward Receipts)
-- **Unique Email Address** - Each user gets an email like `abc123@in.financetracker.app`
-- **Auto-Parsing** - Extracts vendor, amount, date from forwarded invoices
-- **50+ Vendors Supported** - Airlines, hotels, subscriptions, food delivery, etc.
-- **Review & Approve** - Review parsed data before creating transactions
-
-### SaaS Features (Cloud Version)
-- **Multi-Tenant Architecture** - Isolated container per customer
-- **Stripe Integration** - European payments with SEPA Direct Debit support
-- **Custom Subdomains** - Each customer gets `company.financetracker.app`
-- **Admin Dashboard** - Manage tenants, view stats, billing
-
-## Quick Start
-
-### Self-Hosted (Local Development)
+Download the installer for your platform from the [latest release](https://github.com/santacroce-tech/financetracker/releases/latest), or build from source:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/financetracker.git
-cd financetracker
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the application
-python app.py
-
-# Open http://localhost:5000 in your browser
+cd desktop
+npm install
+npm run tauri dev     # development with hot reload
+npm run tauri build   # production installers
 ```
 
-### Docker (Self-Hosted)
-
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# Open http://localhost:5000
-```
-
-### SaaS Mode (Landing Page + Multi-Tenant)
-
-```bash
-# Set environment variables
-export SAAS_MODE=true
-export STRIPE_SECRET_KEY=sk_live_...
-
-# Run the application
-python app.py
-
-# Open http://localhost:5000 to see landing page
-```
-
-## Configuration
-
-Copy `.env.example` to `.env` and configure:
-
-```bash
-cp .env.example .env
-```
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SECRET_KEY` | Flask secret key | `dev-secret-key...` |
-| `DATABASE` | SQLite database path | `finance.db` |
-| `REGISTRATION_ENABLED` | Enable/disable new user registration | `true` |
-| `SAAS_MODE` | Enable SaaS features | `false` |
-| `SAAS_DOMAIN` | Domain for tenant subdomains | `financetracker.app` |
-| `EMAIL_DOMAIN` | Domain for email ingestion | `in.financetracker.app` |
-| `STRIPE_SECRET_KEY` | Stripe API secret key | - |
-| `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key | - |
-
-## Project Structure
-
-```
-financetracker/
-├── app.py                 # Main Flask application
-├── saas.py                # SaaS management module
-├── email_processor.py     # Email parsing for receipts
-├── provision.py           # Docker tenant provisioning
-├── requirements.txt       # Python dependencies
-├── Dockerfile             # Container image
-├── docker-compose.yml     # Self-hosted deployment
-├── docker-compose.saas.yml # SaaS infrastructure
-├── templates/
-│   ├── base.html          # Base template
-│   ├── landing.html       # SaaS landing page
-│   ├── dashboard.html     # Main dashboard
-│   ├── transactions.html  # Transaction list
-│   ├── accounts.html      # Account management
-│   ├── categories.html    # Category management
-│   ├── rules.html         # Auto-categorization rules
-│   ├── clear.html         # Keyboard-driven clearing
-│   ├── email_inbox.html   # Email receipt inbox
-│   ├── reports.html       # Reports & charts
-│   ├── import.html        # CSV import
-│   └── ...
-└── static/
-    ├── css/
-    └── js/
-```
-
-## Usage Guide
-
-### Importing Bank Transactions
-
-1. Export CSV from your bank
-2. Go to **Import** in the sidebar
-3. Select the account to import into
-4. Upload your CSV file
-5. The importer auto-detects:
-   - Date format (DD/MM/YYYY or YYYY-MM-DD)
-   - Number format (1,234.56 or 1.234,56)
-   - Delimiter (comma, semicolon, tab)
-
-### Setting Up Email Forwarding
-
-1. Go to **Email** in the sidebar
-2. Copy your unique email address
-3. Set up email forwarding in Gmail/Outlook:
-   - **Gmail**: Settings → Forwarding → Add address
-   - **Outlook**: Settings → Mail → Forwarding
-4. Or simply forward invoices manually to your inbox email
-
-### Keyboard Shortcuts (Clearing Page)
-
-| Key | Action |
-|-----|--------|
-| `j` / `↓` | Next transaction |
-| `k` / `↑` | Previous transaction |
-| `1`-`9` | Select category |
-| `Enter` | Apply category |
-| `r` | Create rule |
-| `s` | Skip |
-
-### Auto-Categorization Rules
-
-1. Go to **Rules** in the sidebar
-2. Click **Add Rule**
-3. Enter a pattern (e.g., `UBER`, `Amazon`, `NETFLIX`)
-4. Select the category
-5. Rules are applied during import and email processing
-
-## API Endpoints
-
-### Email Webhook
-```
-POST /api/email/inbound
-```
-Receives forwarded emails from SendGrid, Mailgun, or Postmark.
-
-### Transaction API
-```
-POST /api/transaction/<id>/categorize
-POST /api/auto-categorize
-```
-
-## Deployment
-
-### Docker Compose (Self-Hosted)
-
-```bash
-docker-compose up -d
-```
-
-### SaaS with Traefik
-
-```bash
-# Configure environment
-cp .env.example .env
-# Edit .env with your Stripe keys and domain
-
-# Start infrastructure
-docker-compose -f docker-compose.saas.yml up -d
-```
-
-### Provisioning Tenants
-
-```bash
-# List all tenants
-python provision.py list
-
-# Provision a tenant container
-python provision.py provision <tenant_id>
-
-# Provision all pending
-python provision.py provision-all
-```
-
-## Pricing Plans (SaaS)
-
-| Plan | Price | Features |
-|------|-------|----------|
-| **Self-Hosted** | Free | Full source code, Docker ready |
-| **Cloud Pro** | €9/month | Own subdomain, backups, SSL, EU data |
-| **Cloud Family** | €19/month | Pro + 5 users, custom domain |
-
-## Desktop App (Tauri)
-
-FinanceTracker also ships as a **native desktop application** for Windows, macOS, and Linux. The desktop version:
-
-- Works **100% offline** — no server or internet needed
-- Uses a local SQLite file you choose (no login/password)
-- Supports **English**, **Portuguese (BR)**, and **Spanish**
-- Includes a **bundled demo database** so you can try it instantly
-
-See [`desktop/README.md`](desktop/README.md) for build instructions.
-
-## Server Installation
-
-For detailed server deployment instructions (Docker, VPS, SaaS mode), see [`INSTALL.md`](INSTALL.md).
+See [`desktop/README.md`](desktop/README.md) for prerequisites, build outputs, CI/CD, releases and code signing.
 
 ## Tech Stack
 
-### Web Version
-- **Backend**: Python 3.9+, Flask 3.0+
-- **Database**: SQLite
-- **Frontend**: Bootstrap 5, Chart.js
-- **Payments**: Stripe (with SEPA support)
-- **Email**: SendGrid / Mailgun / Postmark
-- **Deployment**: Docker, Traefik
-
-### Desktop Version
 - **Shell**: Tauri v2 (Rust)
 - **Backend**: Rust + rusqlite (bundled SQLite)
 - **Frontend**: React 18, Vite, Bootstrap 5, Chart.js
 - **i18n**: react-i18next (EN, PT-BR, ES)
-- **Platforms**: Windows (.msi), macOS (.dmg), Linux (.AppImage, .deb)
+- **Platforms**: Windows (.msi, .exe), macOS (.dmg), Linux (.AppImage, .deb, .rpm)
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Commit your changes
+4. Push the branch and open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-- **Documentation**: [docs.financetracker.app](https://docs.financetracker.app)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/financetracker/issues)
-- **Email**: support@financetracker.app
-
----
-
-Made with ❤️ in Europe
+MIT — see [LICENSE](LICENSE).
